@@ -220,6 +220,51 @@ export function neededThisMonth(
   return { total: perGoal.reduce((s, x) => s + x.need, 0), perGoal };
 }
 
+/* ───────────── Обзор ───────────── */
+
+/** Сдвинуть период на n месяцев (n < 0 — в прошлое). */
+export function shiftPeriod(p: Period, n: number, startDay = 1): Period {
+  return monthPeriod(new Date(p.start.getFullYear(), p.start.getMonth() + n, p.start.getDate()), startDay);
+}
+
+/** Расходы по категориям за период, по убыванию. */
+export function spendingByCategory(txs: Transaction[], p: Period): { categoryId: string; amount: number }[] {
+  const by = new Map<string, number>();
+  for (const t of live(txs)) {
+    if (t.type !== 'expense' || !inPeriod(t.date, p)) continue;
+    const id = t.categoryId ?? '';
+    by.set(id, (by.get(id) ?? 0) + t.amount);
+  }
+  return [...by].map(([categoryId, amount]) => ({ categoryId, amount })).sort((a, b) => b.amount - a.amount);
+}
+
+/** Накопленные расходы по дням периода: [день1, день1+день2, …]. */
+export function cumulativeDaily(txs: Transaction[], p: Period): number[] {
+  const days = Math.round((startOfDay(p.end).getTime() - startOfDay(p.start).getTime()) / 86400000);
+  const daily = new Array(days).fill(0);
+  for (const t of live(txs)) {
+    if (t.type !== 'expense' || !inPeriod(t.date, p)) continue;
+    const i = Math.floor((startOfDay(new Date(t.date)).getTime() - startOfDay(p.start).getTime()) / 86400000);
+    if (i >= 0 && i < days) daily[i] += t.amount;
+  }
+  let s = 0;
+  return daily.map((v) => (s += v));
+}
+
+/** Доходы и расходы за последние n месяцев (старые → новые). */
+export function monthlyTotals(txs: Transaction[], now: Date, startDay = 1, n = 6) {
+  const cur = monthPeriod(now, startDay);
+  return Array.from({ length: n }, (_, i) => {
+    const p = shiftPeriod(cur, i - (n - 1), startDay);
+    const m = live(txs).filter((t) => inPeriod(t.date, p));
+    return {
+      period: p,
+      income: sum(m.filter((t) => t.type === 'income')),
+      expense: sum(m.filter((t) => t.type === 'expense')),
+    };
+  });
+}
+
 /** Счёт, с которым последний раз делали операцию этого типа. */
 export function lastUsedAccount(txs: Transaction[], type: Transaction['type']): string | undefined {
   let best: Transaction | undefined;

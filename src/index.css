@@ -51,6 +51,19 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 18px 40px rgba(0, 0, 0, 0.18);
     color: #fff;
   }
+  /* Тёмная карточка (цели, обзор) — плоская, без градиентов */
+  .dark-card {
+    background: #1c1c1e;
+    color: #f2f2f2;
+    border-radius: 24px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 30px rgba(0, 0, 0, 0.12);
+    /* роли для графиков: проверенная палитра (dark), фон #1c1c1e */
+    --ink-2: #c3c2b7;
+    --ink-muted: #8e8e93;
+    --grid: #2c2c2e;
+    --axis: #3a3a3c;
+  }
+  .dark-card .hairline { height: 0.5px; background: rgba(255, 255, 255, 0.1); }
   /* Стеклянная кнопка на тёмном: полупрозрачная, размытие, блик сверху, светлая кромка */
   .glass-btn {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 100%);

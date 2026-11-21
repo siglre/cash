@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accountBalance, dueDate, monthlyCapacity, recurringThisPeriod, upcomingTotal, freeMoney, goalSaved, goalStatus, lastUsedAccount, lastUsedRef, monthsLeft, monthSummary, neededPerMonth, neededThisMonth, sortByUsage, topCategory, totalNeededPerMonth, weeklySpend } from './calc';
+import { cumulativeDaily, monthlyTotals, spendingByCategory, accountBalance, dueDate, monthlyCapacity, recurringThisPeriod, upcomingTotal, freeMoney, goalSaved, goalStatus, lastUsedAccount, lastUsedRef, monthsLeft, monthSummary, neededPerMonth, neededThisMonth, sortByUsage, topCategory, totalNeededPerMonth, weeklySpend } from './calc';
 import { monthPeriod, relativeTime } from './dates';
 import { formatMoney } from './money';
 import type { Account, Category, Goal, Recurring, Settings, Transaction } from './types';
@@ -155,6 +155,34 @@ describe('регулярные платежи', () => {
   });
   it('capacity = доход − платежи', () => {
     expect(monthlyCapacity(settings, [rent, subs, { ...subs, id: 'x', archived: true }])).toBe(70000 - 32000);
+  });
+});
+
+describe('обзор', () => {
+  const nov = monthPeriod(now);
+  it('spendingByCategory: по убыванию, только расходы периода', () => {
+    const txs = [
+      tx({ categoryId: 'a', amount: 100 }), tx({ categoryId: 'b', amount: 300 }), tx({ categoryId: 'a', amount: 50 }),
+      tx({ type: 'income', categoryId: 'z', amount: 9999 }),
+      tx({ categoryId: 'c', amount: 777, date: new Date(2026, 9, 5).toISOString() }),
+    ];
+    expect(spendingByCategory(txs, nov)).toEqual([{ categoryId: 'b', amount: 300 }, { categoryId: 'a', amount: 150 }]);
+  });
+  it('cumulativeDaily: длина = дней в периоде, накопительно', () => {
+    const c = cumulativeDaily([
+      tx({ amount: 100, date: new Date(2026, 10, 1, 12).toISOString() }),
+      tx({ amount: 50, date: new Date(2026, 10, 3, 9).toISOString() }),
+    ], nov);
+    expect(c).toHaveLength(30);
+    expect(c.slice(0, 4)).toEqual([100, 100, 150, 150]);
+    expect(c[29]).toBe(150);
+  });
+  it('monthlyTotals: 6 месяцев, последний — текущий', () => {
+    const r = monthlyTotals([tx({ amount: 10 }), tx({ type: 'income', amount: 5, date: new Date(2026, 9, 2).toISOString() })], now);
+    expect(r).toHaveLength(6);
+    expect(r[5]).toMatchObject({ expense: 10, income: 0 });
+    expect(r[4]).toMatchObject({ expense: 0, income: 5 });
+    expect(r[0].period.start).toEqual(new Date(2026, 5, 1));
   });
 });
 

@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
-import { HomeIcon, ListIcon, SettingsIcon, TargetIcon } from './Icons';
+import { ChartIcon, HomeIcon, ListIcon, SettingsIcon, TargetIcon } from './Icons';
 
-export type Tab = 'home' | 'history' | 'goals' | 'settings';
+export type Tab = 'home' | 'history' | 'overview' | 'goals' | 'settings';
 
 const tabs: { id: Tab; label: string; Icon: typeof HomeIcon }[] = [
   { id: 'home', label: 'Главная', Icon: HomeIcon },
   { id: 'history', label: 'История', Icon: ListIcon },
+  { id: 'overview', label: 'Обзор', Icon: ChartIcon },
   { id: 'goals', label: 'Цели', Icon: TargetIcon },
   { id: 'settings', label: 'Настройки', Icon: SettingsIcon },
 ];

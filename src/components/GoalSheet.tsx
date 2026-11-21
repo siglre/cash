@@ -4,10 +4,9 @@ import { toDateInput } from '../lib/dates';
 import { deleteGoal, saveGoal, setGoalArchived } from '../db/repo';
 import { FormSheet, Footnote, LinkRow, Row, groupDigits, inputRight, onlyDigits, Caption } from './Form';
 
-const GRADIENTS: [string, string][] = [
-  ['#5B8CFF', '#9B6BFF'], ['#F0609E', '#FF9A6B'], ['#2BD4A7', '#35A7D8'],
-  ['#F5A340', '#F0609E'], ['#7A7CFF', '#35C4D8'], ['#34C98B', '#C6E35B'],
-];
+/** Однотонные акценты (проверенная палитра для тёмных карточек). Хранятся как [c, c] — поле gradient. */
+const GRADIENTS: [string, string][] = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#9085e9']
+  .map((c) => [c, c] as [string, string]);
 const EMOJIS = ['🎯', '📱', '🎧', '🎮', '📺', '💻', '✈️', '🚗', '🏠', '🎁', '🛋️', '🩺'];
 
 /** Создание и редактирование цели. */
@@ -68,14 +67,14 @@ export function GoalSheet({ goal, saved, onClose }: { goal?: Goal; saved: number
         ))}
       </div>
 
-      <Caption>Цвет карточки</Caption>
+      <Caption>Цвет</Caption>
       <div className="ios-list mb-6 grid grid-cols-6 gap-2 bg-white p-3">
         {GRADIENTS.map((g) => {
-          const on = g[0] === gradient[0] && g[1] === gradient[1];
+          const on = g[0] === gradient[0];
           return (
             <button key={g.join()} onClick={() => setGradient(g)} aria-label="Цвет" aria-pressed={on}
               className={`h-10 rounded-full ${on ? 'ring-2 ring-black ring-offset-2' : ''}`}
-              style={{ background: `linear-gradient(135deg, ${g[0]}, ${g[1]})` }} />
+              style={{ background: g[0] }} />
           );
         })}
       </div>

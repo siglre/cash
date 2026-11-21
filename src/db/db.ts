@@ -2,6 +2,7 @@ import Dexie, { type EntityTable } from 'dexie';
 import type { Account, Category, Goal, Recurring, Settings, Transaction } from '../lib/types';
 import { seedAccounts, seedCategories, seedGoals, seedRecurring, seedSettings } from './seed';
 import { uuid } from '../lib/uuid';
+import { demoTransactions, isDemo } from './demo';
 
 class AppDB extends Dexie {
   transactions!: EntityTable<Transaction, 'id'>;
@@ -12,7 +13,7 @@ class AppDB extends Dexie {
   recurring!: EntityTable<Recurring, 'id'>;
 
   constructor() {
-    super('kopilka');
+    super(isDemo ? 'kopilka-demo' : 'kopilka');
     this.version(1).stores({
       transactions: 'id, type, date, categoryId, goalId, updatedAt',
       categories: 'id, kind, order',
@@ -48,6 +49,14 @@ class AppDB extends Dexie {
         if (list.length) await tx.table('recurring').bulkAdd(list);
         await tx.table('settings').update('main', { fixedCosts: [] });
       });
+    // v4: цели без градиентов — один акцентный цвет из проверенной палитры
+    this.version(4).upgrade(async (tx) => {
+      const remap: Record<string, string> = { '#F0609E': '#d55181', '#5B8CFF': '#3987e5', '#2BD4A7': '#199e70' };
+      await tx.table('goals').toCollection().modify((g: Goal) => {
+        const c = remap[g.gradient[0]] ?? g.gradient[0];
+        g.gradient = [c, c];
+      });
+    });
     // Seed при первом создании базы
     this.on('populate', (tx) => {
       tx.table('categories').bulkAdd(seedCategories);
@@ -55,6 +64,11 @@ class AppDB extends Dexie {
       tx.table('settings').add(seedSettings);
       tx.table('accounts').bulkAdd(seedAccounts);
       tx.table('recurring').bulkAdd(seedRecurring);
+      if (isDemo) {
+        tx.table('transactions').bulkAdd(demoTransactions());
+        tx.table('accounts').update('acc-card', { initialBalance: 60000 });
+        tx.table('accounts').update('acc-credit', { initialBalance: -12000 });
+      }
     });
   }
 }

@@ -14,6 +14,7 @@ import { Toast } from './components/Toast';
 import { Home } from './screens/Home';
 import { History } from './screens/History';
 import { Goals } from './screens/Goals';
+import { Overview } from './screens/Overview';
 import { Settings } from './screens/Settings';
 import { restoreTransaction } from './db/repo';
 
@@ -29,7 +30,8 @@ type ToastState = { id: number; text: string; undoTxId?: string };
 export default function App() {
   const data = useAppData();
   const now = useNow();
-  const [tab, setTab] = useState<Tab>('home');
+  // ?tab=goals — открыть сразу нужную вкладку (удобно для скриншотов в dev)
+  const [tab, setTab] = useState<Tab>(() => (new URLSearchParams(location.search).get('tab') as Tab) || 'home');
   const [sheet, setSheet] = useState<SheetState | null>(null);
   const [form, setForm] = useState<Form | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -59,6 +61,7 @@ export default function App() {
         />
       )}
       {tab === 'history' && <History data={data} now={now} onEdit={(tx) => setSheet({ kind: 'edit', tx })} />}
+      {tab === 'overview' && <Overview data={data} now={now} />}
       {tab === 'goals' && (
         <Goals
           data={data} now={now}

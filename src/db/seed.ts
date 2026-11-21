@@ -31,9 +31,9 @@ export const seedCategories: Category[] = [
 ];
 
 export const seedGoals: Goal[] = [
-  { id: 'goal-airpods', name: 'AirPods (подарок)', target: 25000, deadline: new Date(2027, 2, 1).toISOString(), emoji: '🎧', gradient: ['#F0609E', '#FF9A6B'] },
-  { id: 'goal-iphone', name: 'iPhone', target: 120000, deadline: new Date(2027, 4, 31).toISOString(), emoji: '📱', gradient: ['#5B8CFF', '#9B6BFF'] },
-  { id: 'goal-tv-ps5', name: 'ТВ + PS5', target: 115000, deadline: new Date(2027, 7, 31).toISOString(), emoji: '🎮', gradient: ['#2BD4A7', '#35A7D8'] },
+  { id: 'goal-airpods', name: 'AirPods (подарок)', target: 25000, deadline: new Date(2027, 2, 1).toISOString(), emoji: '🎧', gradient: ['#d55181', '#d55181'] },
+  { id: 'goal-iphone', name: 'iPhone', target: 120000, deadline: new Date(2027, 4, 31).toISOString(), emoji: '📱', gradient: ['#3987e5', '#3987e5'] },
+  { id: 'goal-tv-ps5', name: 'ТВ + PS5', target: 115000, deadline: new Date(2027, 7, 31).toISOString(), emoji: '🎮', gradient: ['#199e70', '#199e70'] },
 ];
 
 export const seedSettings: Settings = {

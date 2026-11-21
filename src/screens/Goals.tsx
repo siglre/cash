@@ -1,10 +1,14 @@
-import { motion, useReducedMotion } from 'framer-motion';
+import type { ReactNode } from 'react';
+import { motion } from 'framer-motion';
 import type { AppData } from '../hooks';
 import type { Goal } from '../lib/types';
 import { goalSaved, goalStatus, monthlyCapacity, neededPerMonth } from '../lib/calc';
 import { monthGenitive } from '../lib/dates';
 import { formatMoney } from '../lib/money';
 import { ScreenTitle } from '../components/ScreenTitle';
+import { Ring } from '../components/Ring';
+
+const GOOD = '#30d158', WARN = '#ffd60a', BAD = '#ff6961';
 
 /** Накоплено на цель за последние 30 дней — «реальный темп» для статуса. */
 function recentPace(data: AppData, goalId: string, now: Date): number {
@@ -68,73 +72,76 @@ export function Goals({ data, now, onMove, onEdit }: {
   );
 }
 
+/** Карточка цели: тёмная, плоская, кольцо прогресса и строки с плашками значений. */
 function GoalCard({ goal, data, now, capacity, onMove, onEdit }: {
   goal: Goal; data: AppData; now: Date; capacity: number;
   onMove: (goalId: string, type: 'to_goal' | 'from_goal') => void;
   onEdit: () => void;
 }) {
-  const reduce = useReducedMotion();
   const saved = goalSaved(data.txs, goal.id);
+  const left = Math.max(0, goal.target - saved);
   const pct = Math.max(0, Math.min(100, Math.round((saved / goal.target) * 100)));
   const status = goalStatus(goal, saved, now, capacity, recentPace(data, goal.id, now));
+  const perMonth = neededPerMonth(goal, saved, now);
   const dl = new Date(goal.deadline);
-  const [c1, c2] = goal.gradient;
+  const accent = goal.gradient[0];
 
-  const chip = {
-    done: { text: 'Цель достигнута', dot: '#4cd964' },
-    on_track: { text: 'Успеваешь', dot: '#4cd964' },
-    need: { text: `Нужно ${formatMoney(status.kind === 'need' ? status.perMonth : 0)} в месяц`, dot: '#ffd60a' },
-    behind: { text: `Не успеваешь · нужно ${formatMoney(neededPerMonth(goal, saved, now))} в месяц`, dot: '#ff6b61' },
+  const st = {
+    done: { text: 'Достигнута', color: GOOD },
+    on_track: { text: 'Успеваешь', color: GOOD },
+    need: { text: 'Нужно добавить темп', color: WARN },
+    behind: { text: 'Не успеваешь', color: BAD },
   }[status.kind];
 
   return (
-    <div
-      className="relative overflow-hidden rounded-[28px] p-4 text-white"
-      style={{
-        background: `radial-gradient(120% 90% at 0% 0%, ${c1} 0%, transparent 62%), radial-gradient(110% 100% at 100% 100%, ${c2} 0%, transparent 66%), linear-gradient(160deg, ${c1}, ${c2})`,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,.4), inset 0 0 0 1px rgba(255,255,255,.18), 0 14px 34px rgba(0,0,0,.14)',
-      }}
-    >
-      {/* мягкий блик для «стеклянности» */}
-      <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-white/25 blur-3xl" />
-
-      <div className="relative flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <div className="text-[26px] leading-none drop-shadow" aria-hidden="true">{goal.emoji}</div>
-          <div className="min-w-0">
-            <div className="truncate text-[17px] font-semibold">{goal.name}</div>
-            <div className="mt-0.5 text-[12px] text-white/75">до {dl.getDate()} {monthGenitive(dl.getMonth())} {dl.getFullYear()}</div>
+    <div className="dark-card p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-[14px] text-[var(--ink-2)]">
+            <span aria-hidden="true">{goal.emoji}</span>
+            <span className="truncate">{goal.name}</span>
           </div>
+          <div className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight">{formatMoney(saved)}</div>
+          <div className="mt-1 text-[12px] text-[var(--ink-muted)]">из {formatMoney(goal.target)} · {pct}%</div>
         </div>
-        <button onClick={onEdit} className="glass-btn h-8 shrink-0 rounded-full px-3 text-[13px]">Изменить</button>
+        <Ring value={saved / goal.target} color={accent} />
       </div>
 
-      <div className="relative mt-5 text-[22px] font-semibold leading-none">
-        {formatMoney(saved)} <span className="text-[13px] font-normal text-white/70">из {formatMoney(goal.target)}</span>
-      </div>
-      <div className="relative mt-2.5 h-1.5 overflow-hidden rounded-full bg-black/20">
-        <motion.div
-          initial={reduce ? false : { width: 0 }} animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-          className="h-full rounded-full bg-white"
-        />
-      </div>
-      <div className="relative mt-1.5 flex justify-between text-[12px] text-white/85">
-        <span>{pct}%</span>
-        <span>осталось {formatMoney(Math.max(0, goal.target - saved))}</span>
-      </div>
+      <div className="hairline mb-1 mt-3.5" />
+      <InfoRow label="Осталось"><Pill color={accent}>{formatMoney(left)}</Pill></InfoRow>
+      <InfoRow label="Срок"><span className="text-[14px]">{dl.getDate()} {monthGenitive(dl.getMonth())} {dl.getFullYear()}</span></InfoRow>
+      {status.kind !== 'done' && (
+        <InfoRow label="Откладывать в месяц"><span className="text-[14px]">{formatMoney(perMonth)}</span></InfoRow>
+      )}
+      <InfoRow label="Статус"><Pill color={st.color}>{st.text}</Pill></InfoRow>
 
-      <div className="glass-btn relative mt-4 inline-flex h-7 items-center gap-2 rounded-full px-3 text-[12px]">
-        <span className="h-1.5 w-1.5 rounded-full" style={{ background: chip.dot }} />
-        {chip.text}
-      </div>
-
-      <div className="relative mt-4 grid grid-cols-2 gap-2.5">
+      <div className="mt-3 grid grid-cols-[1fr_1fr_auto] gap-2">
         <motion.button whileTap={{ scale: 0.97 }} onClick={() => onMove(goal.id, 'to_goal')}
-          className="h-11 rounded-full bg-white text-[15px] font-semibold text-black">Отложить</motion.button>
+          className="h-10 rounded-full bg-white text-[14px] font-semibold text-black">Отложить</motion.button>
         <motion.button whileTap={{ scale: 0.97 }} onClick={() => onMove(goal.id, 'from_goal')} disabled={saved <= 0}
-          className="glass-btn h-11 rounded-full text-[15px] font-medium disabled:opacity-50">Снять</motion.button>
+          className="h-10 rounded-full bg-white/10 text-[14px] disabled:opacity-40">Снять</motion.button>
+        <motion.button whileTap={{ scale: 0.97 }} onClick={onEdit}
+          className="h-10 rounded-full bg-white/10 px-4 text-[14px]">Изменить</motion.button>
       </div>
     </div>
+  );
+}
+
+function InfoRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex min-h-[36px] items-center justify-between gap-3">
+      <span className="text-[14px] text-[var(--ink-2)]">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+/** Плашка значения: цветной текст на приглушённом фоне того же цвета. */
+function Pill({ color, children }: { color: string; children: ReactNode }) {
+  return (
+    <span className="rounded-md px-2 py-0.5 text-[14px] font-medium tabular-nums"
+      style={{ color, background: `color-mix(in oklab, ${color} 16%, transparent)` }}>
+      {children}
+    </span>
   );
 }
