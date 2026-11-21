@@ -5,7 +5,7 @@ import { describeTx } from '../lib/present';
 import { formatMoney } from '../lib/money';
 import { CatIcon } from './CatIcon';
 
-/** Строка операции — отдельная карточка. Тап — редактирование. */
+/** Строка операции внутри .ios-list. Тап — редактирование. */
 export function TxRow({ tx, data, now, onOpen }: {
   tx: Transaction; data: AppData; now: Date; onOpen: (t: Transaction) => void;
 }) {
@@ -13,16 +13,16 @@ export function TxRow({ tx, data, now, onOpen }: {
   return (
     <motion.li
       layout
-      initial={{ opacity: 0, y: -12, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.97 }}
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
       transition={{ type: 'spring', stiffness: 420, damping: 34 }}
     >
-      <motion.button
-        whileTap={{ scale: 0.98 }} onClick={() => onOpen(tx)}
-        className="row-card flex min-h-[72px] w-full items-center gap-3.5 px-4 py-3 text-left"
+      <button
+        onClick={() => onOpen(tx)}
+        className="flex min-h-[68px] w-full items-center gap-3.5 px-4 py-2.5 text-left transition-colors active:bg-black/5"
       >
-        <CatIcon emoji={v.emoji} from={v.color} />
+        <CatIcon emoji={v.emoji} from={v.color} size={42} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-[16px] font-medium leading-tight">{v.title}</div>
           <div className="mt-1 truncate text-[13px] text-muted">{v.subtitle}</div>
@@ -30,7 +30,7 @@ export function TxRow({ tx, data, now, onOpen }: {
         <div className={`whitespace-nowrap text-[16px] font-semibold ${v.positive ? 'text-pos' : ''}`}>
           {v.sign}{formatMoney(tx.amount)}
         </div>
-      </motion.button>
+      </button>
     </motion.li>
   );
 }

@@ -1,12 +1,15 @@
-import { useMemo } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import type { AppData } from '../hooks';
 import type { Transaction } from '../lib/types';
 import { dayLabel, startOfDay } from '../lib/dates';
 import { formatMoney } from '../lib/money';
 import { TxRow } from '../components/TxRow';
+import { ScreenTitle } from '../components/ScreenTitle';
 
-/** Операции по дням. Тап по строке — редактирование/удаление. Фильтры — этап 2. */
+const iconList = { '--sep-inset': '72px' } as CSSProperties;
+
+/** Операции по дням. Тап по строке — изменить или удалить. */
 export function History({ data, now, onEdit }: { data: AppData; now: Date; onEdit: (t: Transaction) => void }) {
   const groups = useMemo(() => {
     const map = new Map<number, Transaction[]>();
@@ -18,26 +21,25 @@ export function History({ data, now, onEdit }: { data: AppData; now: Date; onEdi
   }, [data.txs]);
 
   return (
-    <section className="px-5" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>
-      <h1 className="pb-1 text-[28px] font-semibold">История</h1>
-      <p className="pb-5 text-[14px] text-muted">Нажми на операцию, чтобы изменить или удалить её.</p>
-      {groups.length === 0 && <div className="row-card px-4 py-5 text-center text-[15px] text-muted">Операций пока нет</div>}
+    <div className="px-4">
+      <ScreenTitle>История</ScreenTitle>
+      {groups.length === 0 && <div className="ios-list px-4 py-5 text-center text-[15px] text-muted">Операций пока нет</div>}
       {groups.map(([day, list]) => {
         const spent = list.filter((t) => t.type === 'expense').reduce((a, t) => a + t.amount, 0);
         return (
-          <div key={day} className="mb-5">
-            <div className="mb-2 flex items-baseline justify-between">
-              <h2 className="text-[15px] font-semibold">{dayLabel(new Date(day), now)}</h2>
-              {spent > 0 && <span className="text-[13px] text-muted">потрачено {formatMoney(spent)}</span>}
+          <section key={day} className="mb-6">
+            <div className="mb-1.5 flex items-baseline justify-between px-4 text-[13px] uppercase tracking-wide text-muted">
+              <span>{dayLabel(new Date(day), now)}</span>
+              {spent > 0 && <span className="normal-case tracking-normal">−{formatMoney(spent)}</span>}
             </div>
-            <ul className="flex flex-col gap-2">
+            <ul className="ios-list" style={iconList}>
               <AnimatePresence initial={false}>
                 {list.map((t) => <TxRow key={t.id} tx={t} data={data} now={now} onOpen={onEdit} />)}
               </AnimatePresence>
             </ul>
-          </div>
+          </section>
         );
       })}
-    </section>
+    </div>
   );
 }

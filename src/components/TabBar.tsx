@@ -1,22 +1,23 @@
 import { motion } from 'framer-motion';
-import { HomeIcon, ListIcon, TargetIcon } from './Icons';
+import { HomeIcon, ListIcon, SettingsIcon, TargetIcon } from './Icons';
 
-export type Tab = 'home' | 'history' | 'goals';
+export type Tab = 'home' | 'history' | 'goals' | 'settings';
 
 const tabs: { id: Tab; label: string; Icon: typeof HomeIcon }[] = [
   { id: 'home', label: 'Главная', Icon: HomeIcon },
   { id: 'history', label: 'История', Icon: ListIcon },
   { id: 'goals', label: 'Цели', Icon: TargetIcon },
+  { id: 'settings', label: 'Настройки', Icon: SettingsIcon },
 ];
 
-/** Компактная плавающая пилюля, активная вкладка — светлый круг. */
+/** Тёмная стеклянная пилюля, активная вкладка — светлый круг. */
 export function TabBar({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void }) {
   return (
     <nav
       className="pointer-events-none fixed inset-x-0 z-30 flex justify-center"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) + 14px)' }}
     >
-      <div className="glass-strong pointer-events-auto flex gap-2 rounded-full p-1.5">
+      <div className="glass-dark pointer-events-auto flex gap-1.5 rounded-full p-1.5">
         {tabs.map(({ id, label, Icon }) => {
           const active = id === tab;
           return (
@@ -27,11 +28,12 @@ export function TabBar({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void
             >
               {active && (
                 <motion.span
-                  layoutId="tab-pill" className="absolute inset-0 rounded-full bg-white"
+                  layoutId="tab-pill"
+                  className="absolute inset-0 rounded-full bg-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)]"
                   transition={{ type: 'spring', stiffness: 500, damping: 38 }}
                 />
               )}
-              <span className={`relative ${active ? 'text-black' : 'text-white/60'}`}><Icon size={22} /></span>
+              <span className={`relative ${active ? 'text-white' : 'text-white/45'}`}><Icon size={22} /></span>
             </button>
           );
         })}

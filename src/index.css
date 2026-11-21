@@ -1,24 +1,22 @@
 @import "tailwindcss";
 
-/* Цвета — в CSS-переменных: светлую тему позже добавим через [data-theme="light"] */
+/* Светлая тема по умолчанию (как в референсе). Цвета — только через переменные. */
 :root {
-  --bg: #0a0a0b;
-  --card: #151517;
-  --card-2: #1c1c1f;
-  --line: rgba(255, 255, 255, 0.06);
-  --fg: #ffffff;
-  --muted: #8e8e93;
-  --pos: #30d158;
-  --warn: #ffd60a;
-  --neg: #ff453a;
-  color-scheme: dark;
+  --bg: #ffffff;
+  --group: #f2f2f7;          /* фон сгруппированных списков, как в iOS */
+  --sep: rgba(60, 60, 67, 0.14);
+  --fg: #000000;
+  --muted: #8a8a8e;
+  --pos: #28a745;
+  --warn: #c77c02;
+  --neg: #e5342a;
+  color-scheme: light;
 }
 
 @theme inline {
   --color-bg: var(--bg);
-  --color-card: var(--card);
-  --color-card-2: var(--card-2);
-  --color-line: var(--line);
+  --color-group: var(--group);
+  --color-sep: var(--sep);
   --color-fg: var(--fg);
   --color-muted: var(--muted);
   --color-pos: var(--pos);
@@ -45,44 +43,59 @@
 }
 
 @layer components {
-  /* Единая «стеклянная» кнопка: пилюли, круги, иконки */
-  .btn-glass {
-    background: linear-gradient(180deg, #2c2c31 0%, #17171a 100%);
+  /* Тёмная карточка баланса — как в референсе: светлее сверху, к низу в чёрный */
+  .hero {
+    background:
+      radial-gradient(120% 70% at 50% -10%, rgba(255, 255, 255, 0.22) 0%, transparent 60%),
+      linear-gradient(180deg, #3a3a3e 0%, #161618 45%, #050506 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 18px 40px rgba(0, 0, 0, 0.18);
+    color: #fff;
+  }
+  /* Стеклянная кнопка на тёмном: полупрозрачная, размытие, блик сверху, светлая кромка */
+  .glass-btn {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 100%);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    backdrop-filter: blur(20px) saturate(1.8);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.14),
-      0 0 0 1px rgba(255, 255, 255, 0.07),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.12),
       0 8px 20px rgba(0, 0, 0, 0.35);
     color: #fff;
   }
-  .btn-primary {
-    background: #fff;
-    color: #000;
-    box-shadow: inset 0 1px 0 #fff, 0 8px 24px rgba(255, 255, 255, 0.1);
+  /* Тёмное стекло: таб-бар, тост */
+  .glass-dark {
+    background: rgba(22, 22, 24, 0.72);
+    -webkit-backdrop-filter: blur(24px) saturate(1.8);
+    backdrop-filter: blur(24px) saturate(1.8);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 10px 30px rgba(0, 0, 0, 0.25);
+    color: #fff;
   }
-  /* Полупрозрачная панель: таб-бар, шторки, тост */
-  .glass-strong {
-    background: rgba(24, 24, 27, 0.82);
-    -webkit-backdrop-filter: blur(32px) saturate(1.8);
-    backdrop-filter: blur(32px) saturate(1.8);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 1px var(--line);
+  /* Светлое стекло: шторки */
+  .glass-light {
+    background: rgba(255, 255, 255, 0.82);
+    -webkit-backdrop-filter: blur(40px) saturate(1.8);
+    backdrop-filter: blur(40px) saturate(1.8);
+    box-shadow: inset 0 1px 0 #fff, 0 -10px 40px rgba(0, 0, 0, 0.12);
   }
-  .card {
-    background: var(--card);
-    border-radius: 24px;
-    box-shadow: 0 0 0 1px var(--line);
-  }
-  .row-card {
-    background: var(--card-2);
+  /* Сгруппированный список в стиле iOS: один контейнер, строки через тонкие разделители */
+  .ios-list {
+    background: var(--group);
     border-radius: 20px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    overflow: hidden;
   }
-  .field {
-    height: 48px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.07);
-    padding: 0 16px;
-    font-size: 17px;
-    outline: none;
+  .ios-list > li { position: relative; }
+  .ios-list > li + li::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: var(--sep-inset, 16px);
+    height: 0.5px;
+    background: var(--sep);
+    z-index: 1;
   }
   .no-scrollbar { scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
