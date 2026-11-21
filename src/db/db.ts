@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie';
 import type { Account, Category, Goal, Recurring, Settings, Transaction } from '../lib/types';
 import { seedAccounts, seedCategories, seedGoals, seedRecurring, seedSettings } from './seed';
+import { uuid } from '../lib/uuid';
 
 class AppDB extends Dexie {
   transactions!: EntityTable<Transaction, 'id'>;
@@ -36,7 +37,7 @@ class AppDB extends Dexie {
       .upgrade(async (tx) => {
         const s = (await tx.table('settings').get('main')) as Settings | undefined;
         const list: Recurring[] = (s?.fixedCosts ?? []).map((f, i) => ({
-          id: crypto.randomUUID(),
+          id: uuid(),
           name: f.name,
           amount: f.amount,
           day: 1,

@@ -2,6 +2,7 @@ import { db } from './db';
 import type { Account, Category, Goal, Recurring, Settings, Transaction, TxType } from '../lib/types';
 import type { Backup } from '../lib/backup';
 import { accountFlow } from '../lib/calc';
+import { uuid } from '../lib/uuid';
 
 export interface NewTx {
   type: TxType;
@@ -18,7 +19,7 @@ export interface NewTx {
 export async function addTransaction(input: NewTx): Promise<Transaction> {
   const now = new Date().toISOString();
   const tx: Transaction = {
-    id: crypto.randomUUID(),
+    id: uuid(),
     ...input,
     note: input.note?.trim() || undefined,
     createdAt: now,
@@ -63,7 +64,7 @@ export async function saveAccount(
   } else {
     const order = (await db.accounts.count()) + 1;
     await db.accounts.add({
-      id: crypto.randomUUID(), name: data.name, kind: data.kind, emoji: data.emoji, color: data.color,
+      id: uuid(), name: data.name, kind: data.kind, emoji: data.emoji, color: data.color,
       initialBalance: data.currentBalance, order,
     });
   }
@@ -77,7 +78,7 @@ export async function archiveAccount(id: string) {
 
 export async function saveGoal(goal: Omit<Goal, 'id'> & { id?: string }) {
   if (goal.id) await db.goals.update(goal.id, goal);
-  else await db.goals.add({ ...goal, id: crypto.randomUUID() });
+  else await db.goals.add({ ...goal, id: uuid() });
 }
 
 export async function setGoalArchived(id: string, archived: boolean) {
@@ -95,7 +96,7 @@ export async function deleteGoal(id: string) {
 
 export async function saveRecurring(r: Omit<Recurring, 'id' | 'order'> & { id?: string }) {
   if (r.id) await db.recurring.update(r.id, r);
-  else await db.recurring.add({ ...r, id: crypto.randomUUID(), order: await db.recurring.count() });
+  else await db.recurring.add({ ...r, id: uuid(), order: await db.recurring.count() });
 }
 
 export async function archiveRecurring(id: string) {

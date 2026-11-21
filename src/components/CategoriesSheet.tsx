@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Category } from '../lib/types';
 import { saveCategories } from '../db/repo';
+import { uuid } from '../lib/uuid';
 import { FormSheet, Footnote } from './Form';
 
 const COLORS = ['#5B8CFF', '#34C98B', '#F5A340', '#F2C94C', '#9B6BFF', '#F0609E', '#35C4D8', '#EF5B5B', '#7A7CFF'];
@@ -16,7 +17,7 @@ export function CategoriesSheet({ kind, all, onClose }: { kind: Category['kind']
   };
 
   const add = () => setList([...list, {
-    id: crypto.randomUUID(), name: '', emoji: '•', kind, order: list.length,
+    id: uuid(), name: '', emoji: '•', kind, order: list.length,
     color: COLORS[list.length % COLORS.length],
   }]);
 
