@@ -20,14 +20,23 @@ export default defineConfig({
         background_color: '#f2f2f7',
         theme_color: '#f2f2f7',
         start_url: '/',
+        // ?v= — версия значка (см. index.html)
         icons: [
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'pwa-192x192.png?v=2', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512x512.png?v=2', sizes: '512x512', type: 'image/png' },
+          { src: 'maskable-icon-512x512.png?v=2', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-      // icon.png — исходник для генерации значков, в офлайн-кэш не нужен
-      workbox: { globPatterns: ['**/*.{js,css,html,png,svg,ico}'], globIgnores: ['icon.png'] },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+        globIgnores: ['icon.png'], // исходник для генерации значков, в офлайн-кэш не нужен
+        // новая версия сразу берёт управление, без «старой страницы» при первом открытии
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
+        // ?v= у значков не должен мешать найти их в офлайн-кэше
+        ignoreURLParametersMatching: [/^v$/, /^utm_/],
+      },
     }),
   ],
   test: { environment: 'node' },
