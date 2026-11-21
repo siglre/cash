@@ -2,22 +2,23 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion, useDragControls } from 'framer-motion';
 import type { AppData } from '../hooks';
 import type { Transaction, TxType } from '../lib/types';
-import { goalSaved, lastUsedRef, sortByUsage } from '../lib/calc';
+import { accountBalance, goalSaved, lastUsedAccount, lastUsedRef, sortByUsage } from '../lib/calc';
 import { dayLabel, startOfDay, toDateInput } from '../lib/dates';
 import { formatMoney } from '../lib/money';
 import { haptic } from '../lib/haptic';
 import { addTransaction, softDeleteTransaction, updateTransaction } from '../db/repo';
-import { BackspaceIcon, CloseIcon } from './Icons';
+import { BackspaceIcon } from './Icons';
 
 export type SheetState =
-  | { kind: 'add'; type: 'expense' | 'income' | 'to_goal' }
-  | { kind: 'goal'; type: 'to_goal' | 'from_goal'; goalId?: string }
+  | { kind: 'add'; type: 'expense' | 'income' | 'to_goal' | 'transfer' }
+  | { kind: 'goal'; type: 'to_goal' | 'from_goal'; goalId?: string; amount?: number }
   | { kind: 'edit'; tx: Transaction };
 
 const SEGMENTS_ADD: { type: TxType; label: string }[] = [
   { type: 'expense', label: 'Расход' },
   { type: 'income', label: 'Доход' },
   { type: 'to_goal', label: 'В цель' },
+  { type: 'transfer', label: 'Перевод' },
 ];
 const SEGMENTS_GOAL: { type: TxType; label: string }[] = [
   { type: 'to_goal', label: 'Отложить' },
@@ -28,9 +29,10 @@ const DONE_LABEL: Record<TxType, string> = {
   income: 'Записать доход',
   to_goal: 'Отложить в цель',
   from_goal: 'Снять с цели',
+  transfer: 'Перевести',
 };
 const EDIT_TITLE: Record<TxType, string> = {
-  expense: 'Расход', income: 'Доход', to_goal: 'Отложено в цель', from_goal: 'Снято с цели',
+  expense: 'Расход', income: 'Доход', to_goal: 'Отложено в цель', from_goal: 'Снято с цели', transfer: 'Перевод',
 };
 const MAX_DIGITS = 9;
 
@@ -41,10 +43,13 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
 }) {
   const editing = state.kind === 'edit' ? state.tx : undefined;
   const [type, setType] = useState<TxType>(editing?.type ?? (state as Exclude<SheetState, { kind: 'edit' }>).type);
-  const [digits, setDigits] = useState(editing ? String(editing.amount) : '');
-  const [chosen, setChosen] = useState<string | undefined>(
-    editing ? (editing.categoryId ?? editing.goalId) : state.kind === 'goal' ? state.goalId : undefined,
+  const [digits, setDigits] = useState(
+    editing ? String(editing.amount) : state.kind === 'goal' && state.amount ? String(state.amount) : '',
   );
+  const [chosen, setChosen] = useState<string | undefined>(
+    editing ? (editing.categoryId ?? editing.goalId ?? editing.toAccountId) : state.kind === 'goal' ? state.goalId : undefined,
+  );
+  const [accountChoice, setAccountChoice] = useState<string | undefined>(editing?.accountId);
   const [note, setNote] = useState(editing?.note ?? '');
   const originalDate = editing ? toDateInput(new Date(editing.date)) : undefined;
   const [dateStr, setDateStr] = useState(() => originalDate ?? toDateInput(new Date()));
@@ -57,16 +62,40 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
     return () => { document.body.style.overflow = prev; };
   }, []);
 
+  // Счета (плюс архивный, если редактируем старую операцию)
+  const accounts = useMemo(() => {
+    const list = [...data.accounts];
+    for (const id of [editing?.accountId, editing?.toAccountId]) {
+      const a = id ? data.accountMap.get(id) : undefined;
+      if (a && !list.includes(a)) list.push(a);
+    }
+    return list;
+  }, [data, editing]);
+
+  // Счёт «откуда»: явный выбор → последний для этого типа → первая дебетовая
+  const accountId = accounts.find((a) => a.id === accountChoice)?.id
+    ?? accounts.find((a) => a.id === lastUsedAccount(data.txs, type))?.id
+    ?? (accounts.find((a) => a.kind === 'debit') ?? accounts[0])?.id;
+  const account = accountId ? data.accountMap.get(accountId) : undefined;
+  const cycleAccount = () => {
+    if (accounts.length < 2) return;
+    const i = accounts.findIndex((a) => a.id === accountId);
+    setAccountChoice(accounts[(i + 1) % accounts.length].id);
+  };
+
   const options = useMemo(() => {
     if (isGoalType(type)) {
       return data.goals
         .filter((g) => !g.archived || g.id === editing?.goalId)
         .map((g) => ({ id: g.id, emoji: g.emoji, name: g.name }));
     }
+    if (type === 'transfer') {
+      return accounts.filter((a) => a.id !== accountId).map((a) => ({ id: a.id, emoji: a.emoji, name: a.name }));
+    }
     const cats = data.categories.filter((c) => c.kind === type);
     return sortByUsage(cats, data.txs.filter((t) => t.type === type))
       .map((c) => ({ id: c.id, emoji: c.emoji, name: c.name }));
-  }, [type, data, editing]);
+  }, [type, data, editing, accounts, accountId]);
 
   const lastRef = useMemo(() => lastUsedRef(data.txs, type), [data.txs, type]);
   const selected = options.find((o) => o.id === chosen)?.id
@@ -75,15 +104,16 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
 
   const amount = digits ? Number(digits) : 0;
 
-  // Для целей: сколько накоплено (при редактировании «снятия» своя сумма не считается)
+  // Для целей: сколько накоплено (при редактировании своя сумма не считается)
   const goal = isGoalType(type) && selected ? data.goalMap.get(selected) : undefined;
   let saved = goal ? goalSaved(data.txs, goal.id) : 0;
   if (goal && editing && editing.goalId === goal.id) {
     saved += editing.type === 'to_goal' ? -editing.amount : editing.amount;
   }
   const overdraw = type === 'from_goal' && amount > saved;
+  const needsAccount = !isGoalType(type);
 
-  const canSave = amount > 0 && !saving && !overdraw && !!selected;
+  const canSave = amount > 0 && !saving && !overdraw && !!selected && (!needsAccount || !!accountId);
 
   const press = (d: string) => setDigits((cur) => {
     if (cur === '' && (d === '0' || d === '000')) return cur;
@@ -105,8 +135,10 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
     }
     const payload = {
       type, amount, note, date: iso,
-      categoryId: isGoalType(type) ? undefined : selected,
+      categoryId: type === 'expense' || type === 'income' ? selected : undefined,
       goalId: isGoalType(type) ? selected : undefined,
+      accountId: needsAccount ? accountId : undefined,
+      toAccountId: type === 'transfer' ? selected : undefined,
     };
     if (editing) await updateTransaction(editing.id, payload);
     else await addTransaction(payload);
@@ -123,7 +155,17 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
   const segments = state.kind === 'add' ? SEGMENTS_ADD : state.kind === 'goal' ? SEGMENTS_GOAL : null;
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '000', '0', '⌫'];
   const [y, m, d] = dateStr.split('-').map(Number);
-  const chipsLabel = isGoalType(type) ? 'Цель' : 'Категория';
+  const chipsLabel = isGoalType(type) ? 'Цель' : type === 'transfer' ? 'Куда' : 'Категория';
+
+  let hint = '';
+  if (goal) {
+    hint = type === 'from_goal'
+      ? `На цели «${goal.name}» накоплено ${formatMoney(saved)}`
+      : `Накоплено ${formatMoney(saved)} из ${formatMoney(goal.target)}`;
+  } else if (account) {
+    const b = accountBalance(account, data.txs);
+    hint = b < 0 ? `${account.name}: долг ${formatMoney(-b)}` : `${account.name}: ${formatMoney(b)}`;
+  }
 
   return (
     <div className="fixed inset-0 z-50">
@@ -142,52 +184,51 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
         dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0, bottom: 0.6 }}
         onDragEnd={(_, i) => { if (i.offset.y > 120 || i.velocity.y > 600) onClose(); }}
       >
-        <div className="touch-none px-5 pt-2" onPointerDown={(e) => controls.start(e)}>
+        {/* Ручка — потяни вниз, чтобы закрыть */}
+        <div className="touch-none px-5 pb-1 pt-2" onPointerDown={(e) => controls.start(e)}>
           <div className="mx-auto h-1 w-9 rounded-full bg-black/20" />
-          <div className="mt-3 flex items-center justify-between">
-            {segments ? (
-              <div className="flex gap-1 rounded-full bg-black/[0.06] p-1" onPointerDown={(e) => e.stopPropagation()}>
-                {segments.map((s) => (
-                  <button
-                    key={s.type}
-                    onClick={() => { setType(s.type); setChosen(state.kind === 'goal' ? state.goalId : undefined); }}
-                    className={`h-9 rounded-full px-4 text-[15px] font-semibold transition-colors ${s.type === type ? 'bg-white text-black shadow-[0_1px_4px_rgba(0,0,0,0.12)]' : 'text-black/60'}`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="pl-1 text-[17px] font-semibold">{EDIT_TITLE[type]}</div>
-            )}
-            <button
-              onClick={onClose} aria-label="Закрыть"
-              className="grid h-11 w-11 place-items-center rounded-full bg-black/[0.06] text-black/70"
-              onPointerDown={(e) => e.stopPropagation()}
-            >
-              <CloseIcon size={18} />
-            </button>
-          </div>
+        </div>
+        <div className="px-5 pt-2">
+          {segments ? (
+            <div className="grid rounded-full bg-black/[0.06] p-1" style={{ gridTemplateColumns: `repeat(${segments.length}, 1fr)` }}>
+              {segments.map((s) => (
+                <button
+                  key={s.type}
+                  onClick={() => { setType(s.type); setChosen(state.kind === 'goal' ? state.goalId : undefined); }}
+                  className={`h-9 rounded-full text-[15px] font-semibold transition-colors ${s.type === type ? 'bg-white text-black shadow-[0_1px_4px_rgba(0,0,0,0.12)]' : 'text-black/55'}`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-[17px] font-semibold">{EDIT_TITLE[type]}</div>
+          )}
         </div>
 
-        <div className="px-5 pb-2 pt-4 text-center">
+        <div className="px-5 pb-2 pt-5 text-center">
           <div className={`text-[56px] font-semibold leading-none tracking-tight ${amount ? '' : 'text-black/25'}`} aria-live="polite">
             {formatMoney(amount)}
           </div>
-          <div className={`mt-2 h-5 text-[13px] ${overdraw ? 'text-neg' : 'text-muted'}`}>
-            {goal && (type === 'from_goal'
-              ? `На цели «${goal.name}» накоплено ${formatMoney(saved)}`
-              : `Накоплено ${formatMoney(saved)} из ${formatMoney(goal.target)}`)}
-          </div>
+          <div className={`mt-2 h-5 text-[13px] ${overdraw ? 'text-neg' : 'text-muted'}`}>{hint}</div>
         </div>
 
         <div className="flex items-center gap-2 px-5">
           <input
             value={note} onChange={(e) => setNote(e.target.value)}
-            placeholder="Заметка (необязательно)" maxLength={80} enterKeyHint="done"
+            placeholder="Заметка" maxLength={80} enterKeyHint="done"
             className="h-11 min-w-0 flex-1 rounded-full bg-black/[0.05] px-4 text-[16px] outline-none placeholder:text-muted"
           />
-          <label className="relative grid h-11 shrink-0 place-items-center rounded-full bg-black/[0.05] px-4 text-[15px] font-medium">
+          {needsAccount && account && (
+            <button
+              onClick={cycleAccount} aria-label={`Счёт: ${account.name}. Нажми, чтобы сменить`}
+              className="flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-black/[0.05] px-3.5 text-[15px] font-medium"
+            >
+              {type === 'transfer' && <span className="text-muted">Из</span>}
+              <span aria-hidden="true">{account.emoji}</span>{account.name}
+            </button>
+          )}
+          <label className="relative grid h-11 shrink-0 place-items-center rounded-full bg-black/[0.05] px-3.5 text-[15px] font-medium">
             {dayLabel(new Date(y, m - 1, d))}
             <input
               type="date" value={dateStr} max={toDateInput(new Date())}
@@ -200,7 +241,9 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
 
         <div className="mt-3 px-5 text-[12px] uppercase tracking-wide text-muted">{chipsLabel}</div>
         <div className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto px-5 py-1.5">
-          {options.length === 0 && <div className="py-3 text-[14px] text-muted">Нет активных целей</div>}
+          {options.length === 0 && (
+            <div className="py-3 text-[14px] text-muted">{type === 'transfer' ? 'Нужен второй счёт' : 'Нет активных целей'}</div>
+          )}
           {options.map((o) => {
             const on = o.id === selected;
             return (
@@ -222,10 +265,7 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
 
         <div className="flex gap-2 px-5 pt-3">
           {editing && (
-            <button
-              onClick={remove}
-              className="h-14 shrink-0 rounded-full bg-neg/10 px-5 text-[16px] font-semibold text-neg"
-            >
+            <button onClick={remove} className="h-14 shrink-0 rounded-full bg-neg/10 px-5 text-[16px] font-semibold text-neg">
               Удалить
             </button>
           )}

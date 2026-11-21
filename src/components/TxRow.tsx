@@ -9,7 +9,7 @@ import { CatIcon } from './CatIcon';
 export function TxRow({ tx, data, now, onOpen }: {
   tx: Transaction; data: AppData; now: Date; onOpen: (t: Transaction) => void;
 }) {
-  const v = describeTx(tx, data.catMap, data.goalMap, now);
+  const v = describeTx(tx, data.catMap, data.goalMap, data.accountMap, now);
   return (
     <motion.li
       layout

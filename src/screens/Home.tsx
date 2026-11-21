@@ -1,108 +1,98 @@
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type { CSSProperties } from 'react';
 import type { AppData } from '../hooks';
-import type { Goal, Transaction } from '../lib/types';
-import { goalSaved, monthSummary, totalNeededPerMonth } from '../lib/calc';
-import { monthGenitive, monthPeriod, monthPrepositional } from '../lib/dates';
+import type { Account } from '../lib/types';
+import { accountBalance, freeMoney, neededThisMonth } from '../lib/calc';
+import { monthPeriod, monthPrepositional } from '../lib/dates';
 import { formatMoney } from '../lib/money';
 import { BalanceHero } from '../components/BalanceHero';
-import { TxRow } from '../components/TxRow';
 import { CatIcon } from '../components/CatIcon';
 import { ChevronRight } from '../components/Icons';
-import type { Tab } from '../components/TabBar';
 
 const iconList = { '--sep-inset': '72px' } as CSSProperties;
 
-export function Home({ data, now, onAdd, onEdit, onNavigate }: {
+/** Главная: свободно, сколько отложить в этом месяце, счета. */
+export function Home({ data, now, onAdd, onSaveToGoal, onAccount }: {
   data: AppData; now: Date;
   onAdd: (t: 'expense' | 'income' | 'to_goal') => void;
-  onEdit: (t: Transaction) => void;
-  onNavigate: (t: Tab) => void;
+  onSaveToGoal: (goalId: string, amount: number) => void;
+  onAccount: (a?: Account) => void;
 }) {
-  const { txs, goals, settings } = data;
-  const period = monthPeriod(now, settings.monthStartDay);
-  const sum = monthSummary(txs, settings, now);
-  const activeGoals = goals.filter((g) => !g.archived).sort((a, b) => a.deadline.localeCompare(b.deadline));
-  const perMonth = totalNeededPerMonth(goals, txs, now);
+  const { txs, goals, accounts, settings } = data;
+  const sum = freeMoney(accounts, goals, txs);
+  const need = neededThisMonth(goals, txs, now, settings.monthStartDay);
+  const month = monthPrepositional(monthPeriod(now, settings.monthStartDay).start.getMonth());
+  const pending = need.perGoal.filter((x) => x.need > 0);
+  const notSetUp = txs.length === 0 && accounts.every((a) => a.initialBalance === 0);
 
   return (
     <div style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)' }}>
-      <BalanceHero
-        monthLabel={monthPrepositional(period.start.getMonth())}
-        free={sum.free} income={sum.incomeBase} incomeIsPlan={sum.income < settings.monthlyIncome}
-        expense={sum.expense} toGoals={sum.toGoals} empty={txs.length === 0}
-        onAdd={onAdd}
-      />
+      <BalanceHero sum={sum} onAdd={onAdd} />
 
-      <section className="mt-7 px-4">
-        <SectionHeader title="Последние операции" onAll={() => onNavigate('history')} />
-        {txs.length === 0 ? (
-          <div className="ios-list px-4 py-5 text-center text-[15px] text-muted">Операций пока нет</div>
-        ) : (
-          <ul className="ios-list" style={iconList}>
-            <AnimatePresence initial={false}>
-              {txs.slice(0, 5).map((t) => <TxRow key={t.id} tx={t} data={data} now={now} onOpen={onEdit} />)}
-            </AnimatePresence>
-          </ul>
-        )}
+      {/* Нужно отложить */}
+      <section className="mt-6 px-4">
+        <div className="ios-list" style={iconList}>
+          <div className="px-4 pb-3 pt-4">
+            <div className="text-[15px] text-muted">Нужно отложить в {month}</div>
+            <div className="mt-1 text-[34px] font-semibold leading-tight tracking-tight">
+              {need.total > 0 ? formatMoney(need.total) : 'Всё отложено ✓'}
+            </div>
+          </div>
+          {pending.length > 0 && <div className="ml-4 h-[0.5px] bg-sep" />}
+          {pending.length > 0 && (
+            <ul className="ios-list rounded-none" style={iconList}>
+              {pending.map(({ goal, need: n }) => (
+                <li key={goal.id}>
+                  <button
+                    onClick={() => onSaveToGoal(goal.id, n)}
+                    className="flex min-h-[60px] w-full items-center gap-3.5 px-4 py-2 text-left transition-colors active:bg-black/5"
+                  >
+                    <CatIcon emoji={goal.emoji} from={goal.gradient[0]} to={goal.gradient[1]} size={42} />
+                    <span className="min-w-0 flex-1 truncate text-[16px] font-medium">{goal.name}</span>
+                    <span className="text-[16px] font-semibold">{formatMoney(n)}</span>
+                    <span className="ml-1 rounded-full bg-black px-3 py-1.5 text-[13px] font-semibold text-white">Отложить</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </section>
 
-      {activeGoals.length > 0 && (
-        <section className="mt-7 px-4">
-          <SectionHeader title="Цели" onAll={() => onNavigate('goals')} />
-          <ul className="ios-list" style={iconList}>
-            {activeGoals.map((g) => (
-              <GoalRow key={g.id} goal={g} saved={goalSaved(txs, g.id)} onOpen={() => onNavigate('goals')} />
-            ))}
-          </ul>
-          {perMonth > 0 && (
-            <p className="mt-2 px-4 text-[13px] text-muted">
-              Чтобы успеть ко всем целям, откладывай {formatMoney(perMonth)} в месяц.
-            </p>
-          )}
-        </section>
-      )}
+      {/* Счета */}
+      <section className="mt-7 px-4">
+        <h2 className="mb-2 pl-1 text-[20px] font-semibold">Счета</h2>
+        <ul className="ios-list" style={iconList}>
+          {accounts.map((a) => {
+            const b = accountBalance(a, txs);
+            return (
+              <li key={a.id}>
+                <button onClick={() => onAccount(a)} className="flex min-h-[64px] w-full items-center gap-3.5 px-4 py-2 text-left transition-colors active:bg-black/5">
+                  <CatIcon emoji={a.emoji} from={a.color} size={42} />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[16px] font-medium">{a.name}</div>
+                    <div className="text-[13px] text-muted">{a.kind === 'credit' ? 'Кредитная' : 'Дебетовая'}</div>
+                  </div>
+                  <div className={`text-right text-[16px] font-semibold ${b < 0 ? 'text-neg' : ''}`}>
+                    {b < 0 ? `−${formatMoney(-b)}` : formatMoney(b)}
+                    {b < 0 && <div className="text-[12px] font-normal text-muted">долг</div>}
+                  </div>
+                  <ChevronRight size={16} className="shrink-0 text-black/25" />
+                </button>
+              </li>
+            );
+          })}
+          <li>
+            <button onClick={() => onAccount()} className="flex min-h-[52px] w-full items-center px-4 text-[16px] text-[#007aff] active:bg-black/5">
+              Добавить счёт
+            </button>
+          </li>
+        </ul>
+        <p className="mt-2 px-4 text-[13px] leading-snug text-muted">
+          {notSetUp
+            ? 'Для начала нажми на счёт и укажи, сколько на нём сейчас.'
+            : 'Нажми на счёт, чтобы поправить остаток, если он разошёлся с банком.'}
+        </p>
+      </section>
     </div>
-  );
-}
-
-function SectionHeader({ title, onAll }: { title: string; onAll: () => void }) {
-  return (
-    <div className="mb-2 flex items-center justify-between pl-1">
-      <h2 className="text-[20px] font-semibold">{title}</h2>
-      <button onClick={onAll} className="flex h-11 items-center gap-0.5 pl-3 text-[15px] text-muted">
-        Все <ChevronRight size={16} />
-      </button>
-    </div>
-  );
-}
-
-function GoalRow({ goal, saved, onOpen }: { goal: Goal; saved: number; onOpen: () => void }) {
-  const reduce = useReducedMotion();
-  const pct = Math.max(0, Math.min(100, Math.round((saved / goal.target) * 100)));
-  const dl = new Date(goal.deadline);
-  return (
-    <li>
-      <button onClick={onOpen} className="flex w-full items-center gap-3.5 px-4 py-3 text-left transition-colors active:bg-black/5">
-        <CatIcon emoji={goal.emoji} from={goal.gradient[0]} to={goal.gradient[1]} size={42} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="truncate text-[16px] font-medium">{goal.name}</span>
-            <span className="shrink-0 text-[15px] font-semibold">{pct}%</span>
-          </div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/[0.08]">
-            <motion.div
-              initial={reduce ? false : { width: 0 }} animate={{ width: `${pct}%` }}
-              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-              className="h-full rounded-full"
-              style={{ background: `linear-gradient(90deg, ${goal.gradient[0]}, ${goal.gradient[1]})` }}
-            />
-          </div>
-          <div className="mt-1.5 text-[13px] text-muted">
-            {formatMoney(saved)} из {formatMoney(goal.target)} · до {dl.getDate()} {monthGenitive(dl.getMonth())}
-          </div>
-        </div>
-      </button>
-    </li>
   );
 }

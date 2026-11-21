@@ -1,4 +1,9 @@
-import type { Category, Goal, Settings } from '../lib/types';
+import type { Account, Category, Goal, Settings } from '../lib/types';
+
+export const seedAccounts: Account[] = [
+  { id: 'acc-card', name: 'Карта', kind: 'debit', emoji: '💳', color: '#5B8CFF', initialBalance: 0, order: 0 },
+  { id: 'acc-credit', name: 'Кредитка', kind: 'credit', emoji: '💳', color: '#F0609E', initialBalance: 0, order: 1 },
+];
 
 const exp = (id: string, name: string, emoji: string, color: string, order: number): Category =>
   ({ id, name, emoji, color, kind: 'expense', order });

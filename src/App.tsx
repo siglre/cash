@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useAppData, useNow } from './hooks';
+import type { Account } from './lib/types';
+import { accountBalance } from './lib/calc';
 import { TabBar, type Tab } from './components/TabBar';
 import { AddSheet, type SheetState } from './components/AddSheet';
+import { AccountSheet } from './components/AccountSheet';
 import { Toast } from './components/Toast';
 import { Home } from './screens/Home';
 import { History } from './screens/History';
@@ -15,6 +18,8 @@ export default function App() {
   const now = useNow();
   const [tab, setTab] = useState<Tab>('home');
   const [sheet, setSheet] = useState<SheetState | null>(null);
+  // undefined — закрыто; null — новый счёт; Account — редактирование
+  const [accountSheet, setAccountSheet] = useState<Account | null | undefined>(undefined);
   const [deletedId, setDeletedId] = useState<string | null>(null);
 
   if (!data) return <div className="min-h-dvh bg-bg" />;
@@ -28,9 +33,10 @@ export default function App() {
     >
       {tab === 'home' && (
         <Home
-          data={data} now={now} onNavigate={go}
+          data={data} now={now}
           onAdd={(type) => setSheet({ kind: 'add', type })}
-          onEdit={(tx) => setSheet({ kind: 'edit', tx })}
+          onSaveToGoal={(goalId, amount) => setSheet({ kind: 'goal', type: 'to_goal', goalId, amount })}
+          onAccount={(a) => setAccountSheet(a ?? null)}
         />
       )}
       {tab === 'history' && <History data={data} now={now} onEdit={(tx) => setSheet({ kind: 'edit', tx })} />}
@@ -52,6 +58,17 @@ export default function App() {
       <AnimatePresence>
         {sheet && (
           <AddSheet key="sheet" state={sheet} data={data} onClose={() => setSheet(null)} onDeleted={setDeletedId} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {accountSheet !== undefined && (
+          <AccountSheet
+            key="account"
+            account={accountSheet ?? undefined}
+            balance={accountSheet ? accountBalance(accountSheet, data.txs) : 0}
+            canDelete={data.accounts.length > 1}
+            onClose={() => setAccountSheet(undefined)}
+          />
         )}
       </AnimatePresence>
     </div>

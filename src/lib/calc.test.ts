@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { goalSaved, goalStatus, lastUsedRef, monthsLeft, monthSummary, neededPerMonth, sortByUsage, topCategory, totalNeededPerMonth, weeklySpend } from './calc';
+import { accountBalance, freeMoney, goalSaved, goalStatus, lastUsedAccount, lastUsedRef, monthsLeft, monthSummary, neededPerMonth, neededThisMonth, sortByUsage, topCategory, totalNeededPerMonth, weeklySpend } from './calc';
 import { monthPeriod, relativeTime } from './dates';
 import { formatMoney } from './money';
-import type { Category, Goal, Settings, Transaction } from './types';
+import type { Account, Category, Goal, Settings, Transaction } from './types';
 
 const settings: Settings = { id: 'main', currency: 'RUB', monthlyIncome: 70000, fixedCosts: [{ name: 'Квартира', amount: 31000 }], monthStartDay: 1 };
 const now = new Date(2026, 10, 21, 12, 0); // 21 ноября 2026
@@ -88,6 +88,50 @@ describe('виджеты главной', () => {
     const txs = [tx({ categoryId: 'b' }), tx({ categoryId: 'b' }), tx({ categoryId: 'c' })];
     expect(sortByUsage([cat('a', 0), cat('c', 1), cat('b', 2)], txs).map((c) => c.id)).toEqual(['b', 'c', 'a']);
     expect(lastUsedRef(txs, 'expense')).toBe('c');
+  });
+});
+
+describe('счета', () => {
+  const card: Account = { id: 'card', name: 'Карта', kind: 'debit', emoji: '💳', color: '#000', initialBalance: 50000, order: 0 };
+  const credit: Account = { id: 'cr', name: 'Кредитка', kind: 'credit', emoji: '💳', color: '#000', initialBalance: -10000, order: 1 };
+  it('остаток: доходы, расходы, переводы', () => {
+    const txs = [
+      tx({ type: 'income', accountId: 'card', amount: 70000 }),
+      tx({ type: 'expense', accountId: 'card', amount: 5000 }),
+      tx({ type: 'expense', accountId: 'cr', amount: 2000 }),
+      tx({ type: 'transfer', accountId: 'card', toAccountId: 'cr', amount: 12000 }),
+      tx({ type: 'to_goal', goalId: 'g', amount: 9000 }), // резерв — счёт не трогает
+    ];
+    expect(accountBalance(card, txs)).toBe(50000 + 70000 - 5000 - 12000);
+    expect(accountBalance(credit, txs)).toBe(-10000 - 2000 + 12000);
+  });
+  it('свободно = на счетах − долг − в целях', () => {
+    const txs = [tx({ type: 'to_goal', goalId: 'g', amount: 9000 })];
+    expect(freeMoney([card, credit], [goal()], txs)).toEqual({ onAccounts: 50000, debt: 10000, inGoals: 9000, free: 31000 });
+  });
+  it('архивный счёт не считается', () => {
+    expect(freeMoney([card, { ...credit, archived: true }], [], []).free).toBe(50000);
+  });
+  it('lastUsedAccount', () => {
+    expect(lastUsedAccount([tx({ accountId: 'card' }), tx({ accountId: 'cr' })], 'expense')).toBe('cr');
+  });
+});
+
+describe('neededThisMonth', () => {
+  // iPhone 120 000 к 31 мая; с 1 ноября — 7 месяцев → 17 143 в месяц
+  it('план на месяц от остатка на начало месяца', () => {
+    expect(neededThisMonth([goal()], [], now).total).toBe(17143);
+  });
+  it('отложенное в этом месяце уменьшает, до нуля', () => {
+    expect(neededThisMonth([goal()], [tx({ type: 'to_goal', goalId: 'g', amount: 7143 })], now).total).toBe(10000);
+    expect(neededThisMonth([goal()], [tx({ type: 'to_goal', goalId: 'g', amount: 20000 })], now).total).toBe(0);
+  });
+  it('отложенное в прошлых месяцах уменьшает план', () => {
+    const old = tx({ type: 'to_goal', goalId: 'g', amount: 50000, date: new Date(2026, 9, 10).toISOString() });
+    expect(neededThisMonth([goal()], [old], now).total).toBe(10000);
+  });
+  it('не больше, чем осталось до цели', () => {
+    expect(neededThisMonth([goal({ target: 1000 })], [], now).total).toBe(143);
   });
 });
 

@@ -1,4 +1,4 @@
-import type { Category, Goal, Settings, Transaction } from './types';
+import type { Account, Category, Goal, Settings, Transaction } from './types';
 import { addDays, inPeriod, monthPeriod, startOfDay, type Period } from './dates';
 
 const live = (txs: Transaction[]) => txs.filter((t) => !t.deleted);
@@ -128,6 +128,78 @@ export function sortByUsage(categories: Category[], txs: Transaction[]): Categor
   const count = new Map<string, number>();
   for (const t of live(txs)) if (t.categoryId) count.set(t.categoryId, (count.get(t.categoryId) ?? 0) + 1);
   return [...categories].sort((a, b) => (count.get(b.id) ?? 0) - (count.get(a.id) ?? 0) || a.order - b.order);
+}
+
+/* ───────────── Счета ───────────── */
+
+/** Движение денег по счёту: доходы − расходы ± переводы. Цели счёт не трогают (резерв). */
+export function accountFlow(accountId: string, txs: Transaction[]): number {
+  let s = 0;
+  for (const t of live(txs)) {
+    if (t.type === 'income' && t.accountId === accountId) s += t.amount;
+    else if (t.type === 'expense' && t.accountId === accountId) s -= t.amount;
+    else if (t.type === 'transfer') {
+      if (t.accountId === accountId) s -= t.amount;
+      if (t.toAccountId === accountId) s += t.amount;
+    }
+  }
+  return s;
+}
+
+export const accountBalance = (a: Account, txs: Transaction[]) => a.initialBalance + accountFlow(a.id, txs);
+
+export interface FreeSummary {
+  onAccounts: number; // сумма положительных остатков
+  debt: number;       // сумма долгов (положительное число)
+  inGoals: number;    // отложено в активные цели
+  free: number;
+}
+
+/** Свободно = на счетах − долги − отложено в цели. */
+export function freeMoney(accounts: Account[], goals: Goal[], txs: Transaction[]): FreeSummary {
+  let onAccounts = 0, debt = 0;
+  for (const a of accounts) {
+    if (a.archived) continue;
+    const b = accountBalance(a, txs);
+    if (b >= 0) onAccounts += b; else debt -= b;
+  }
+  const inGoals = goals.filter((g) => !g.archived).reduce((s, g) => s + Math.max(0, goalSaved(txs, g.id)), 0);
+  return { onAccounts, debt, inGoals, free: onAccounts - debt - inGoals };
+}
+
+/**
+ * Сколько нужно отложить в текущем месяце.
+ * План на месяц фиксируется от остатка на начало месяца; то, что уже отложено в этом месяце, вычитается.
+ */
+export function neededThisMonth(
+  goals: Goal[], txs: Transaction[], now: Date, startDay = 1,
+): { total: number; perGoal: { goal: Goal; need: number }[] } {
+  const p = monthPeriod(now, startDay);
+  const before = live(txs).filter((t) => new Date(t.date).getTime() < p.start.getTime());
+  const during = live(txs).filter((t) => inPeriod(t.date, p));
+  const perGoal = goals
+    .filter((g) => !g.archived)
+    .map((goal) => {
+      const remaining = Math.max(0, goal.target - goalSaved(before, goal.id));
+      if (remaining === 0) return { goal, need: 0 };
+      const m = monthsLeft(goal.deadline, p.start);
+      const plan = m === 0 ? remaining : Math.ceil(remaining / m);
+      const done = goalSaved(during, goal.id);
+      const remainingNow = Math.max(0, goal.target - goalSaved(txs, goal.id));
+      return { goal, need: Math.max(0, Math.min(plan - done, remainingNow)) };
+    })
+    .sort((a, b) => a.goal.deadline.localeCompare(b.goal.deadline));
+  return { total: perGoal.reduce((s, x) => s + x.need, 0), perGoal };
+}
+
+/** Счёт, с которым последний раз делали операцию этого типа. */
+export function lastUsedAccount(txs: Transaction[], type: Transaction['type']): string | undefined {
+  let best: Transaction | undefined;
+  for (const t of live(txs)) {
+    if (t.type !== type || !t.accountId) continue;
+    if (!best || t.createdAt > best.createdAt) best = t;
+  }
+  return best?.accountId;
 }
 
 /** Последняя использованная категория/цель для данного типа операций. */
