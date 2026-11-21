@@ -17,14 +17,14 @@ export function TabBar({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void
       className="pointer-events-none fixed inset-x-0 z-30 flex justify-center"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) + 14px)' }}
     >
-      <div className="glass-dark pointer-events-auto flex gap-1.5 rounded-full p-1.5">
+      <div className="glass-dark pointer-events-auto flex gap-1.5 rounded-full p-1">
         {tabs.map(({ id, label, Icon }) => {
           const active = id === tab;
           return (
             <button
               key={id} onClick={() => onChange(id)}
               aria-label={label} aria-current={active ? 'page' : undefined}
-              className="relative grid h-12 w-12 place-items-center rounded-full"
+              className="relative grid h-11 w-11 place-items-center rounded-full"
             >
               {active && (
                 <motion.span
@@ -33,7 +33,7 @@ export function TabBar({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void
                   transition={{ type: 'spring', stiffness: 500, damping: 38 }}
                 />
               )}
-              <span className={`relative ${active ? 'text-white' : 'text-white/45'}`}><Icon size={22} /></span>
+              <span className={`relative ${active ? 'text-white' : 'text-white/45'}`}><Icon size={20} /></span>
             </button>
           );
         })}

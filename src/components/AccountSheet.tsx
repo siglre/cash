@@ -54,49 +54,49 @@ export function AccountSheet({ account, balance, canDelete, onClose }: {
         transition={{ type: 'spring', stiffness: 380, damping: 38 }}
       >
         <div className="flex items-center justify-between pb-3 pt-3">
-          <button onClick={onClose} className="h-11 px-1 text-[17px] text-[#007aff]">Отмена</button>
-          <div className="text-[17px] font-semibold">{account ? account.name : 'Новый счёт'}</div>
-          <button onClick={save} className="h-11 px-1 text-[17px] font-semibold text-[#007aff]">Готово</button>
+          <button onClick={onClose} className="h-11 px-1 text-[15px] text-[#007aff]">Отмена</button>
+          <div className="text-[15px] font-semibold">{account ? account.name : 'Новый счёт'}</div>
+          <button onClick={save} className="h-11 px-1 text-[15px] font-semibold text-[#007aff]">Готово</button>
         </div>
 
         <ul className="ios-list bg-white">
-          <li className="flex min-h-[52px] items-center gap-3 px-4">
-            <span className="text-[17px]">Название</span>
+          <li className="flex min-h-[46px] items-center gap-3 px-4">
+            <span className="text-[15px]">Название</span>
             <input
               value={name} onChange={(e) => setName(e.target.value)} placeholder={kind === 'credit' ? 'Кредитка' : 'Карта'}
-              className="min-w-0 flex-1 bg-transparent text-right text-[17px] text-muted outline-none focus:text-fg"
+              className="min-w-0 flex-1 bg-transparent text-right text-[16px] text-muted outline-none focus:text-fg"
             />
           </li>
-          <li className="flex min-h-[52px] items-center justify-between gap-3 px-4">
-            <span className="text-[17px]">Тип</span>
+          <li className="flex min-h-[46px] items-center justify-between gap-3 px-4">
+            <span className="text-[15px]">Тип</span>
             <div className="grid grid-cols-2 rounded-full bg-black/[0.06] p-0.5">
               {(['debit', 'credit'] as const).map((k) => (
                 <button
                   key={k} onClick={() => setKind(k)}
-                  className={`h-8 rounded-full px-3 text-[14px] font-medium ${kind === k ? 'bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12)]' : 'text-black/55'}`}
+                  className={`h-7 rounded-full px-2.5 text-[13px] ${kind === k ? 'bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12)]' : 'text-black/55'}`}
                 >
                   {k === 'debit' ? 'Дебетовая' : 'Кредитная'}
                 </button>
               ))}
             </div>
           </li>
-          <li className="flex min-h-[52px] items-center gap-3 px-4">
-            <span className="text-[17px]">{kind === 'credit' && !overpaid ? 'Долг сейчас' : 'Сейчас на счёте'}</span>
+          <li className="flex min-h-[46px] items-center gap-3 px-4">
+            <span className="text-[15px]">{kind === 'credit' && !overpaid ? 'Долг сейчас' : 'Сейчас на счёте'}</span>
             <input
               inputMode="numeric" value={group(amount)} onChange={(e) => setAmount(digits(e.target.value))} placeholder="0"
               autoFocus={!account}
-              className="min-w-0 flex-1 bg-transparent text-right text-[17px] outline-none"
+              className="min-w-0 flex-1 bg-transparent text-right text-[16px] outline-none"
             />
-            <span className="text-[17px] text-muted">₽</span>
+            <span className="text-[15px] text-muted">₽</span>
           </li>
           {kind === 'credit' && (
-            <li className="flex min-h-[52px] items-center justify-between gap-3 px-4">
-              <span className="text-[17px]">Долга нет, есть плюс</span>
+            <li className="flex min-h-[46px] items-center justify-between gap-3 px-4">
+              <span className="text-[15px]">Долга нет, есть плюс</span>
               <input type="checkbox" checked={overpaid} onChange={(e) => setOverpaid(e.target.checked)} className="h-5 w-5 accent-black" />
             </li>
           )}
         </ul>
-        <p className="mt-2 px-4 text-[13px] leading-snug text-muted">
+        <p className="mt-2 px-4 text-[12px] leading-snug text-muted">
           Укажи, сколько сейчас {kind === 'credit' && !overpaid ? 'должен по карте' : 'на счёте'} — как в приложении банка.
           Дальше остаток будет меняться сам от доходов, расходов и переводов.
         </p>
@@ -104,7 +104,7 @@ export function AccountSheet({ account, balance, canDelete, onClose }: {
         {account && canDelete && (
           <ul className="ios-list mt-5 bg-white">
             <li>
-              <button onClick={remove} className="h-[52px] w-full text-[17px] text-neg active:bg-black/5">Удалить счёт</button>
+              <button onClick={remove} className="h-[46px] w-full text-[15px] text-neg active:bg-black/5">Удалить счёт</button>
             </li>
           </ul>
         )}

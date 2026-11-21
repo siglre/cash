@@ -7,7 +7,7 @@ import { formatMoney } from '../lib/money';
 import { TxRow } from '../components/TxRow';
 import { ScreenTitle } from '../components/ScreenTitle';
 
-const iconList = { '--sep-inset': '72px' } as CSSProperties;
+const iconList = { '--sep-inset': '60px' } as CSSProperties;
 
 /** Операции по дням. Тап по строке — изменить или удалить. */
 export function History({ data, now, onEdit }: { data: AppData; now: Date; onEdit: (t: Transaction) => void }) {
@@ -28,7 +28,7 @@ export function History({ data, now, onEdit }: { data: AppData; now: Date; onEdi
         const spent = list.filter((t) => t.type === 'expense').reduce((a, t) => a + t.amount, 0);
         return (
           <section key={day} className="mb-6">
-            <div className="mb-1.5 flex items-baseline justify-between px-4 text-[13px] uppercase tracking-wide text-muted">
+            <div className="mb-1.5 flex items-baseline justify-between px-4 text-[12px] uppercase tracking-wide text-muted">
               <span>{dayLabel(new Date(day), now)}</span>
               {spent > 0 && <span className="normal-case tracking-normal">−{formatMoney(spent)}</span>}
             </div>

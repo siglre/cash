@@ -28,10 +28,10 @@ export function Goals({ data, now, onMove }: {
   return (
     <div className="px-4">
       <ScreenTitle>Цели</ScreenTitle>
-      <p className="-mt-2 px-1 pb-5 text-[15px] text-muted">
+      <p className="-mt-1 px-1 pb-4 text-[13px] text-muted">
         Отложено {formatMoney(totalSaved)} из {formatMoney(totalTarget)}
       </p>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         {goals.map((g) => (
           <GoalCard key={g.id} goal={g} data={data} now={now} capacity={capacity} onMove={onMove} />
         ))}
@@ -60,7 +60,7 @@ function GoalCard({ goal, data, now, capacity, onMove }: {
 
   return (
     <div
-      className="relative overflow-hidden rounded-[32px] p-5 text-white"
+      className="relative overflow-hidden rounded-[28px] p-4 text-white"
       style={{
         background: `radial-gradient(120% 90% at 0% 0%, ${c1} 0%, transparent 62%), radial-gradient(110% 100% at 100% 100%, ${c2} 0%, transparent 66%), linear-gradient(160deg, ${c1}, ${c2})`,
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,.4), inset 0 0 0 1px rgba(255,255,255,.18), 0 14px 34px rgba(0,0,0,.14)',
@@ -71,37 +71,37 @@ function GoalCard({ goal, data, now, capacity, onMove }: {
 
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="truncate text-[21px] font-semibold">{goal.name}</div>
-          <div className="mt-0.5 text-[14px] text-white/80">до {dl.getDate()} {monthGenitive(dl.getMonth())} {dl.getFullYear()}</div>
+          <div className="truncate text-[17px] font-semibold">{goal.name}</div>
+          <div className="mt-0.5 text-[12px] text-white/75">до {dl.getDate()} {monthGenitive(dl.getMonth())} {dl.getFullYear()}</div>
         </div>
-        <div className="text-[36px] leading-none drop-shadow" aria-hidden="true">{goal.emoji}</div>
+        <div className="text-[28px] leading-none drop-shadow" aria-hidden="true">{goal.emoji}</div>
       </div>
 
-      <div className="relative mt-6 text-[28px] font-semibold leading-none">
-        {formatMoney(saved)} <span className="text-[16px] font-medium text-white/75">из {formatMoney(goal.target)}</span>
+      <div className="relative mt-5 text-[22px] font-semibold leading-none">
+        {formatMoney(saved)} <span className="text-[13px] font-normal text-white/70">из {formatMoney(goal.target)}</span>
       </div>
-      <div className="relative mt-3 h-2 overflow-hidden rounded-full bg-black/20">
+      <div className="relative mt-2.5 h-1.5 overflow-hidden rounded-full bg-black/20">
         <motion.div
           initial={reduce ? false : { width: 0 }} animate={{ width: `${pct}%` }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           className="h-full rounded-full bg-white"
         />
       </div>
-      <div className="relative mt-2 flex justify-between text-[13px] text-white/85">
+      <div className="relative mt-1.5 flex justify-between text-[12px] text-white/85">
         <span>{pct}%</span>
         <span>осталось {formatMoney(Math.max(0, goal.target - saved))}</span>
       </div>
 
-      <div className="glass-btn relative mt-4 inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-[13px] font-medium">
+      <div className="glass-btn relative mt-4 inline-flex h-7 items-center gap-2 rounded-full px-3 text-[12px]">
         <span className="h-1.5 w-1.5 rounded-full" style={{ background: chip.dot }} />
         {chip.text}
       </div>
 
       <div className="relative mt-4 grid grid-cols-2 gap-2.5">
         <motion.button whileTap={{ scale: 0.97 }} onClick={() => onMove(goal.id, 'to_goal')}
-          className="h-12 rounded-full bg-white text-[16px] font-semibold text-black">Отложить</motion.button>
+          className="h-11 rounded-full bg-white text-[15px] font-semibold text-black">Отложить</motion.button>
         <motion.button whileTap={{ scale: 0.97 }} onClick={() => onMove(goal.id, 'from_goal')} disabled={saved <= 0}
-          className="glass-btn h-12 rounded-full text-[16px] font-semibold disabled:opacity-50">Снять</motion.button>
+          className="glass-btn h-11 rounded-full text-[15px] font-medium disabled:opacity-50">Снять</motion.button>
       </div>
     </div>
   );

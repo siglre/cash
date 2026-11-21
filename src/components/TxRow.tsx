@@ -20,14 +20,14 @@ export function TxRow({ tx, data, now, onOpen }: {
     >
       <button
         onClick={() => onOpen(tx)}
-        className="flex min-h-[68px] w-full items-center gap-3.5 px-4 py-2.5 text-left transition-colors active:bg-black/5"
+        className="flex min-h-[56px] w-full items-center gap-3 px-4 py-2 text-left transition-colors active:bg-black/5"
       >
-        <CatIcon emoji={v.emoji} from={v.color} size={42} />
+        <CatIcon emoji={v.emoji} from={v.color} size={34} />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[16px] font-medium leading-tight">{v.title}</div>
-          <div className="mt-1 truncate text-[13px] text-muted">{v.subtitle}</div>
+          <div className="truncate text-[15px] leading-tight">{v.title}</div>
+          <div className="mt-0.5 truncate text-[12px] text-muted">{v.subtitle}</div>
         </div>
-        <div className={`whitespace-nowrap text-[16px] font-semibold ${v.positive ? 'text-pos' : ''}`}>
+        <div className={`whitespace-nowrap text-[15px] ${v.positive ? 'text-pos' : ''}`}>
           {v.sign}{formatMoney(tx.amount)}
         </div>
       </button>

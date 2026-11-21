@@ -195,19 +195,19 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
                 <button
                   key={s.type}
                   onClick={() => { setType(s.type); setChosen(state.kind === 'goal' ? state.goalId : undefined); }}
-                  className={`h-9 rounded-full text-[15px] font-semibold transition-colors ${s.type === type ? 'bg-white text-black shadow-[0_1px_4px_rgba(0,0,0,0.12)]' : 'text-black/55'}`}
+                  className={`h-8 rounded-full text-[14px] font-medium transition-colors ${s.type === type ? 'bg-white text-black shadow-[0_1px_4px_rgba(0,0,0,0.12)]' : 'text-black/55'}`}
                 >
                   {s.label}
                 </button>
               ))}
             </div>
           ) : (
-            <div className="text-center text-[17px] font-semibold">{EDIT_TITLE[type]}</div>
+            <div className="text-center text-[15px] font-semibold">{EDIT_TITLE[type]}</div>
           )}
         </div>
 
-        <div className="px-5 pb-2 pt-5 text-center">
-          <div className={`text-[56px] font-semibold leading-none tracking-tight ${amount ? '' : 'text-black/25'}`} aria-live="polite">
+        <div className="px-5 pb-1 pt-4 text-center">
+          <div className={`text-[44px] font-semibold leading-none tracking-tight ${amount ? '' : 'text-black/25'}`} aria-live="polite">
             {formatMoney(amount)}
           </div>
           <div className={`mt-2 h-5 text-[13px] ${overdraw ? 'text-neg' : 'text-muted'}`}>{hint}</div>
@@ -222,13 +222,13 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
           {needsAccount && account && (
             <button
               onClick={cycleAccount} aria-label={`Счёт: ${account.name}. Нажми, чтобы сменить`}
-              className="flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-black/[0.05] px-3.5 text-[15px] font-medium"
+              className="flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-black/[0.05] px-3 text-[14px]"
             >
               {type === 'transfer' && <span className="text-muted">Из</span>}
               <span aria-hidden="true">{account.emoji}</span>{account.name}
             </button>
           )}
-          <label className="relative grid h-11 shrink-0 place-items-center rounded-full bg-black/[0.05] px-3.5 text-[15px] font-medium">
+          <label className="relative grid h-11 shrink-0 place-items-center rounded-full bg-black/[0.05] px-3 text-[14px]">
             {dayLabel(new Date(y, m - 1, d))}
             <input
               type="date" value={dateStr} max={toDateInput(new Date())}
@@ -239,7 +239,7 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
           </label>
         </div>
 
-        <div className="mt-3 px-5 text-[12px] uppercase tracking-wide text-muted">{chipsLabel}</div>
+        <div className="mt-3 px-5 text-[11px] uppercase tracking-wide text-muted">{chipsLabel}</div>
         <div className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto px-5 py-1.5">
           {options.length === 0 && (
             <div className="py-3 text-[14px] text-muted">{type === 'transfer' ? 'Нужен второй счёт' : 'Нет активных целей'}</div>
@@ -249,7 +249,7 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
             return (
               <button
                 key={o.id} onClick={() => setChosen(o.id)} aria-pressed={on}
-                className={`flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-[15px] font-medium transition-colors ${on ? 'bg-black text-white' : 'bg-black/[0.05] text-black'}`}
+                className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[14px] transition-colors ${on ? 'bg-black text-white' : 'bg-black/[0.05] text-black'}`}
               >
                 <span aria-hidden="true">{o.emoji}</span>{o.name}
               </button>
@@ -265,13 +265,13 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
 
         <div className="flex gap-2 px-5 pt-3">
           {editing && (
-            <button onClick={remove} className="h-14 shrink-0 rounded-full bg-neg/10 px-5 text-[16px] font-semibold text-neg">
+            <button onClick={remove} className="h-12 shrink-0 rounded-full bg-neg/10 px-5 text-[15px] font-medium text-neg">
               Удалить
             </button>
           )}
           <motion.button
             whileTap={{ scale: 0.98 }} onClick={save} disabled={!canSave}
-            className="h-14 min-w-0 flex-1 rounded-full bg-black text-[17px] font-semibold text-white transition-opacity disabled:opacity-30"
+            className="h-12 min-w-0 flex-1 rounded-full bg-black text-[15px] font-semibold text-white transition-opacity disabled:opacity-30"
           >
             {editing ? 'Сохранить' : DONE_LABEL[type]}
           </motion.button>
@@ -288,10 +288,10 @@ function NumKey({ k, onPress }: { k: string; onPress: () => void }) {
       transition={{ duration: 0.08 }}
       onClick={onPress}
       aria-label={k === '⌫' ? 'Стереть' : k}
-      className={`grid place-items-center rounded-2xl ${k === '000' ? 'text-[22px]' : 'text-[30px]'} font-medium`}
-      style={{ height: 'clamp(46px, 7dvh, 62px)' }}
+      className={`grid place-items-center rounded-2xl ${k === '000' ? 'text-[18px]' : 'text-[26px]'}`}
+      style={{ height: 'clamp(42px, 6.4dvh, 56px)' }}
     >
-      {k === '⌫' ? <BackspaceIcon size={26} /> : k}
+      {k === '⌫' ? <BackspaceIcon size={22} /> : k}
     </motion.button>
   );
 }

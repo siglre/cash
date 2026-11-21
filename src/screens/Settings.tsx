@@ -44,15 +44,15 @@ export function Settings({ settings }: { settings: S }) {
         <Row label="Доход в месяц">
           <input
             inputMode="numeric" value={group(income)} onChange={(e) => setIncome(digits(e.target.value))}
-            className="w-32 bg-transparent text-right text-[17px] text-muted outline-none focus:text-fg"
+            className="w-32 bg-transparent text-right text-[16px] text-muted outline-none focus:text-fg"
             aria-label="Доход в месяц"
           />
-          <span className="text-[17px] text-muted">₽</span>
+          <span className="text-[15px] text-muted">₽</span>
         </Row>
         <Row label="Месяц начинается">
           <select
             value={startDay} onChange={(e) => setStartDay(Number(e.target.value))}
-            className="appearance-none bg-transparent text-right text-[17px] text-muted outline-none"
+            className="appearance-none bg-transparent text-right text-[16px] text-muted outline-none"
             aria-label="Число начала месяца"
           >
             {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => <option key={d} value={d}>{d}-го числа</option>)}
@@ -64,7 +64,7 @@ export function Settings({ settings }: { settings: S }) {
       <Caption>Обязательные расходы</Caption>
       <ul className="ios-list">
         {costs.map((c, i) => (
-          <li key={i} className="flex min-h-[52px] items-center gap-3 pl-3 pr-4">
+          <li key={i} className="flex min-h-[46px] items-center gap-3 pl-3 pr-4">
             <button
               onClick={() => setCosts(costs.filter((_, j) => j !== i))} aria-label="Удалить"
               className="grid h-11 w-8 shrink-0 place-items-center"
@@ -75,21 +75,21 @@ export function Settings({ settings }: { settings: S }) {
             </button>
             <input
               value={c.name} placeholder="Название" onChange={(e) => setCost(i, { name: e.target.value })}
-              className="min-w-0 flex-1 bg-transparent text-[17px] outline-none placeholder:text-muted"
+              className="min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-muted"
             />
             <input
               inputMode="numeric" value={group(c.amount)} placeholder="0"
               onChange={(e) => setCost(i, { amount: digits(e.target.value) })}
-              className="w-24 bg-transparent text-right text-[17px] text-muted outline-none focus:text-fg"
+              className="w-24 bg-transparent text-right text-[16px] text-muted outline-none focus:text-fg"
               aria-label="Сумма"
             />
-            <span className="text-[17px] text-muted">₽</span>
+            <span className="text-[15px] text-muted">₽</span>
           </li>
         ))}
         <li>
           <button
             onClick={() => setCosts([...costs, { name: '', amount: '' }])}
-            className="flex min-h-[52px] w-full items-center gap-3 pl-3 pr-4 text-left text-[17px] text-[#007aff] active:bg-black/5"
+            className="flex min-h-[46px] w-full items-center gap-3 pl-3 pr-4 text-left text-[15px] text-[#007aff] active:bg-black/5"
           >
             <span className="grid h-11 w-8 place-items-center">
               <span className="grid h-[22px] w-[22px] place-items-center rounded-full bg-pos text-[18px] leading-none text-white">+</span>
@@ -105,7 +105,7 @@ export function Settings({ settings }: { settings: S }) {
 
       <Caption>Данные</Caption>
       <ul className="ios-list">
-        <Row label="Хранение"><span className="text-[17px] text-muted">На этом телефоне</span></Row>
+        <Row label="Хранение"><span className="text-[15px] text-muted">На этом телефоне</span></Row>
       </ul>
       <Footnote>Синхронизация между устройствами и экспорт появятся позже.</Footnote>
     </div>
@@ -113,15 +113,15 @@ export function Settings({ settings }: { settings: S }) {
 }
 
 function Caption({ children }: { children: React.ReactNode }) {
-  return <div className="mt-2 px-4 pb-1.5 text-[13px] uppercase tracking-wide text-muted">{children}</div>;
+  return <div className="mt-2 px-4 pb-1.5 text-[12px] uppercase tracking-wide text-muted">{children}</div>;
 }
 function Footnote({ children }: { children: React.ReactNode }) {
-  return <p className="mb-6 mt-2 px-4 text-[13px] leading-snug text-muted">{children}</p>;
+  return <p className="mb-6 mt-2 px-4 text-[12px] leading-snug text-muted">{children}</p>;
 }
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <li className="flex min-h-[52px] items-center justify-between gap-3 px-4">
-      <span className="text-[17px]">{label}</span>
+    <li className="flex min-h-[46px] items-center justify-between gap-3 px-4">
+      <span className="text-[15px]">{label}</span>
       <span className="flex items-center gap-1">{children}</span>
     </li>
   );
