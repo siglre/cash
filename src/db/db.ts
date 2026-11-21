@@ -68,6 +68,7 @@ class AppDB extends Dexie {
         tx.table('transactions').bulkAdd(demoTransactions());
         tx.table('accounts').update('acc-card', { initialBalance: 60000 });
         tx.table('accounts').update('acc-credit', { initialBalance: -12000 });
+        tx.table('recurring').add({ id: 'rec-demo-subs', name: 'Подписки', amount: 1290, day: 28, categoryId: 'exp-subs', accountId: 'acc-card', order: 1 });
       }
     });
   }

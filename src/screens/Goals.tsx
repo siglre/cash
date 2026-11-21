@@ -2,24 +2,13 @@ import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import type { AppData } from '../hooks';
 import type { Goal } from '../lib/types';
-import { goalSaved, goalStatus, monthlyCapacity, neededPerMonth } from '../lib/calc';
+import { goalSaved, goalStatus, monthlyCapacity, neededPerMonth, neededThisMonth } from '../lib/calc';
 import { monthGenitive } from '../lib/dates';
 import { formatMoney } from '../lib/money';
 import { ScreenTitle } from '../components/ScreenTitle';
 import { Ring } from '../components/Ring';
 
 const GOOD = '#30d158', WARN = '#ffd60a', BAD = '#ff6961';
-
-/** Накоплено на цель за последние 30 дней — «реальный темп» для статуса. */
-function recentPace(data: AppData, goalId: string, now: Date): number {
-  const from = now.getTime() - 30 * 86400000;
-  let s = 0;
-  for (const t of data.txs) {
-    if (t.goalId !== goalId || new Date(t.date).getTime() < from) continue;
-    s += t.type === 'to_goal' ? t.amount : t.type === 'from_goal' ? -t.amount : 0;
-  }
-  return s;
-}
 
 export function Goals({ data, now, onMove, onEdit }: {
   data: AppData; now: Date;
@@ -32,6 +21,10 @@ export function Goals({ data, now, onMove, onEdit }: {
   const capacity = monthlyCapacity(data.settings, data.recurring);
   const totalSaved = goals.reduce((a, g) => a + goalSaved(data.txs, g.id), 0);
   const totalTarget = goals.reduce((a, g) => a + g.target, 0);
+  // Сколько по каждой цели ещё отложить в этом месяце — то же, что «Нужно отложить» на главной
+  const thisMonth = new Map(
+    neededThisMonth(data.goals, data.txs, now, data.settings.monthStartDay).perGoal.map((x) => [x.goal.id, x.need]),
+  );
 
   return (
     <div className="px-4">
@@ -48,7 +41,8 @@ export function Goals({ data, now, onMove, onEdit }: {
       )}
       <div className="flex flex-col gap-3">
         {goals.map((g) => (
-          <GoalCard key={g.id} goal={g} data={data} now={now} capacity={capacity} onMove={onMove} onEdit={() => onEdit(g)} />
+          <GoalCard key={g.id} goal={g} data={data} now={now} capacity={capacity} needNow={thisMonth.get(g.id) ?? 0}
+            onMove={onMove} onEdit={() => onEdit(g)} />
         ))}
       </div>
 
@@ -73,25 +67,27 @@ export function Goals({ data, now, onMove, onEdit }: {
 }
 
 /** Карточка цели: тёмная, плоская, кольцо прогресса и строки с плашками значений. */
-function GoalCard({ goal, data, now, capacity, onMove, onEdit }: {
+function GoalCard({ goal, data, now, capacity, needNow, onMove, onEdit }: {
   goal: Goal; data: AppData; now: Date; capacity: number;
+  /** сколько по этой цели ещё отложить в текущем месяце */
+  needNow: number;
   onMove: (goalId: string, type: 'to_goal' | 'from_goal') => void;
   onEdit: () => void;
 }) {
   const saved = goalSaved(data.txs, goal.id);
   const left = Math.max(0, goal.target - saved);
   const pct = Math.max(0, Math.min(100, Math.round((saved / goal.target) * 100)));
-  const status = goalStatus(goal, saved, now, capacity, recentPace(data, goal.id, now));
+  const status = goalStatus(goal, saved, now, capacity);
   const perMonth = neededPerMonth(goal, saved, now);
   const dl = new Date(goal.deadline);
   const accent = goal.gradient[0];
 
-  const st = {
-    done: { text: 'Достигнута', color: GOOD },
-    on_track: { text: 'Успеваешь', color: GOOD },
-    need: { text: 'Нужно добавить темп', color: WARN },
-    behind: { text: 'Не успеваешь', color: BAD },
-  }[status.kind];
+  // Последняя строка: достигнута / не успеть к сроку / план на этот месяц
+  const last =
+    status.kind === 'done' ? { label: 'Статус', text: 'Цель достигнута', color: GOOD }
+      : status.kind === 'behind' ? { label: 'Статус', text: 'Не успеваешь к сроку', color: BAD }
+        : needNow > 0 ? { label: 'В этом месяце', text: `Ещё ${formatMoney(needNow)}`, color: WARN }
+          : { label: 'В этом месяце', text: 'Отложено ✓', color: GOOD };
 
   return (
     <div className="dark-card p-4">
@@ -113,7 +109,7 @@ function GoalCard({ goal, data, now, capacity, onMove, onEdit }: {
       {status.kind !== 'done' && (
         <InfoRow label="Откладывать в месяц"><span className="text-[14px]">{formatMoney(perMonth)}</span></InfoRow>
       )}
-      <InfoRow label="Статус"><Pill color={st.color}>{st.text}</Pill></InfoRow>
+      <InfoRow label={last.label}><Pill color={last.color}>{last.text}</Pill></InfoRow>
 
       <div className="mt-3 grid grid-cols-3 gap-2">
         <motion.button whileTap={{ scale: 0.97 }} onClick={() => onMove(goal.id, 'to_goal')}

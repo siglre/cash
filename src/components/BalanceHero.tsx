@@ -26,9 +26,16 @@ export function BalanceHero({ sum, onAdd }: {
       />
 
       {/* Из чего складывается «Свободно» — только ненулевые слагаемые */}
-      <div className="mx-auto mt-5 flex max-w-[360px] flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] text-white/45">
+      {/* Равные колонки: подпись и сумма строго по центру своей колонки. 4 значения — сеткой 2×2. */}
+      <div
+        className="mx-auto mt-5 grid w-full max-w-[340px] gap-y-3 text-[11px] text-white/45"
+        style={{ gridTemplateColumns: `repeat(${parts.length === 4 ? 2 : parts.length}, minmax(0, 1fr))` }}
+      >
         {parts.map(([label, value]) => (
-          <div key={label}>{label}<div className="mt-0.5 text-[13px] text-white/85">{value}</div></div>
+          <div key={label} className="flex min-w-0 flex-col items-center">
+            <span>{label}</span>
+            <span className="mt-0.5 whitespace-nowrap text-[13px] tabular-nums text-white/85">{value}</span>
+          </div>
         ))}
       </div>
 
