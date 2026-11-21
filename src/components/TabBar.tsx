@@ -1,13 +1,12 @@
 import { motion } from 'framer-motion';
-import { ChartIcon, HomeIcon, ListIcon, TargetIcon } from './Icons';
+import { HomeIcon, ListIcon, TargetIcon } from './Icons';
 
-export type Tab = 'home' | 'history' | 'goals' | 'stats';
+export type Tab = 'home' | 'history' | 'goals';
 
 const tabs: { id: Tab; label: string; Icon: typeof HomeIcon }[] = [
   { id: 'home', label: 'Главная', Icon: HomeIcon },
   { id: 'history', label: 'История', Icon: ListIcon },
   { id: 'goals', label: 'Цели', Icon: TargetIcon },
-  { id: 'stats', label: 'Статистика', Icon: ChartIcon },
 ];
 
 export function TabBar({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void }) {
@@ -23,9 +22,8 @@ export function TabBar({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void
             <button
               key={id}
               onClick={() => onChange(id)}
-              aria-label={label}
               aria-current={active ? 'page' : undefined}
-              className="relative grid h-[52px] w-[60px] place-items-center rounded-full"
+              className="relative flex h-[54px] w-[92px] flex-col items-center justify-center gap-0.5 rounded-full"
             >
               {active && (
                 <motion.span
@@ -34,8 +32,9 @@ export function TabBar({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void
                   transition={{ type: 'spring', stiffness: 500, damping: 38 }}
                 />
               )}
-              <span className={`relative ${active ? 'text-black' : 'text-white/70'}`}>
-                <Icon size={24} />
+              <span className={`relative flex flex-col items-center gap-0.5 ${active ? 'text-black' : 'text-white/70'}`}>
+                <Icon size={22} />
+                <span className="text-[11px] font-medium leading-none">{label}</span>
               </span>
             </button>
           );

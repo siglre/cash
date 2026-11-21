@@ -1,50 +1,55 @@
 import { motion } from 'framer-motion';
 import { AnimatedNumber } from './AnimatedNumber';
-import { ArrowDownLeft, ArrowUpRight, PlusIcon } from './Icons';
+import { ArrowUpRight, PlusIcon } from './Icons';
 import { formatMoney } from '../lib/money';
 
-export function BalanceHero({ monthLabel, free, incomeBase, onAdd }: {
-  monthLabel: string; free: number; incomeBase: number;
+export function BalanceHero({ monthLabel, free, income, incomeIsPlan, expense, toGoals, onAdd }: {
+  monthLabel: string; free: number; income: number; incomeIsPlan: boolean;
+  expense: number; toGoals: number;
   onAdd: (t: 'expense' | 'income' | 'to_goal') => void;
 }) {
   return (
-    <section className="px-5 pt-6 text-center">
-      <div className="text-[15px] text-muted">Свободно в {monthLabel}</div>
-      <AnimatedNumber
-        value={free}
-        className={`mt-1 block text-[52px] font-semibold leading-[1.05] tracking-tight ${free < 0 ? 'text-neg' : ''}`}
-      />
-      <div className="mt-1 text-[13px] text-muted">из {formatMoney(incomeBase)} дохода</div>
+    <section className="px-5 pt-5">
+      <div className="text-center">
+        <div className="text-[15px] text-muted">Свободно в {monthLabel}</div>
+        <AnimatedNumber
+          value={free}
+          className={`mt-1 block text-[52px] font-semibold leading-[1.05] tracking-tight ${free < 0 ? 'text-neg' : ''}`}
+        />
+        <div className="mt-1 text-[13px] text-muted">доход − расходы − отложено на цели</div>
+      </div>
 
-      <div className="mt-6 flex items-end justify-center gap-7">
-        <Action label="Доход" onClick={() => onAdd('income')}><ArrowDownLeft size={24} /></Action>
-        <div className="flex flex-col items-center gap-2">
-          <motion.button
-            whileTap={{ scale: 0.92 }}
-            onClick={() => onAdd('expense')}
-            aria-label="Добавить расход"
-            className="grid h-[76px] w-[76px] place-items-center rounded-full bg-white text-black shadow-[0_8px_30px_rgba(255,255,255,0.18),inset_0_1px_0_rgba(255,255,255,0.9)]"
-          >
-            <PlusIcon size={34} />
-          </motion.button>
-          <span className="text-[13px] text-muted">Расход</span>
-        </div>
-        <Action label="В цель" onClick={() => onAdd('to_goal')}><ArrowUpRight size={24} /></Action>
+      <div className="card mt-5 grid grid-cols-3 divide-x divide-line py-3 text-center">
+        <Stat label={incomeIsPlan ? 'Доход (план)' : 'Доход'} value={formatMoney(income)} />
+        <Stat label="Расходы" value={formatMoney(expense)} />
+        <Stat label="Отложено" value={formatMoney(toGoals)} />
+      </div>
+
+      <motion.button
+        whileTap={{ scale: 0.98 }} onClick={() => onAdd('expense')}
+        className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-full bg-white text-[17px] font-semibold text-black shadow-[0_8px_30px_rgba(255,255,255,0.12)]"
+      >
+        <PlusIcon size={22} /> Записать расход
+      </motion.button>
+      <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+        <motion.button whileTap={{ scale: 0.97 }} onClick={() => onAdd('income')}
+          className="glass flex h-12 items-center justify-center gap-1.5 rounded-full text-[15px] font-semibold">
+          <PlusIcon size={18} /> Доход
+        </motion.button>
+        <motion.button whileTap={{ scale: 0.97 }} onClick={() => onAdd('to_goal')}
+          className="glass flex h-12 items-center justify-center gap-1.5 rounded-full text-[15px] font-semibold">
+          <ArrowUpRight size={18} /> Отложить в цель
+        </motion.button>
       </div>
     </section>
   );
 }
 
-function Action({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col items-center gap-2">
-      <motion.button
-        whileTap={{ scale: 0.92 }} onClick={onClick} aria-label={label}
-        className="glass grid h-14 w-14 place-items-center rounded-full"
-      >
-        {children}
-      </motion.button>
-      <span className="text-[13px] text-muted">{label}</span>
+    <div className="px-1">
+      <div className="text-[12px] text-muted">{label}</div>
+      <div className="mt-0.5 text-[15px] font-semibold">{value}</div>
     </div>
   );
 }
