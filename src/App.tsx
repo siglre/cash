@@ -23,7 +23,7 @@ export default function App() {
   return (
     <div
       className="mx-auto min-h-dvh max-w-[520px]"
-      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 110px)' }}
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 110px)' }}
     >
       {tab === 'home' && (
         <Home

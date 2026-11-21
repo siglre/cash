@@ -1,10 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type CSSProperties } from 'react';
 import { animate, useMotionValue, useMotionValueEvent, useReducedMotion } from 'framer-motion';
 import { formatMoney } from '../lib/money';
 
 /** Число, которое плавно «докручивается» до нового значения. */
-export function AnimatedNumber({ value, format = formatMoney, className }: {
-  value: number; format?: (n: number) => string; className?: string;
+export function AnimatedNumber({ value, format = formatMoney, className, style }: {
+  value: number; format?: (n: number) => string; className?: string; style?: CSSProperties;
 }) {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLSpanElement>(null);
@@ -26,5 +26,5 @@ export function AnimatedNumber({ value, format = formatMoney, className }: {
     if (ref.current) ref.current.textContent = format(Math.round(v));
   });
 
-  return <span ref={ref} className={className}>{initial}</span>;
+  return <span ref={ref} className={className} style={style}>{initial}</span>;
 }

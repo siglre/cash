@@ -25,9 +25,9 @@ export function Goals({ data, now, onMove }: {
   const totalTarget = goals.reduce((a, g) => a + g.target, 0);
 
   return (
-    <section className="px-4 pt-4">
-      <h1 className="px-1 pb-1 pt-2 text-[28px] font-semibold">Цели</h1>
-      <p className="px-1 pb-4 text-[14px] text-muted">
+    <section className="px-5" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>
+      <h1 className="pb-1 text-[28px] font-semibold">Цели</h1>
+      <p className="pb-5 text-[14px] text-muted">
         Всего отложено {formatMoney(totalSaved)} из {formatMoney(totalTarget)}
       </p>
       <div className="flex flex-col gap-4">
@@ -92,9 +92,9 @@ function GoalCard({ goal, data, now, capacity, onMove }: {
 
       <div className="mt-4 grid grid-cols-2 gap-2.5">
         <motion.button whileTap={{ scale: 0.97 }} onClick={() => onMove(goal.id, 'to_goal')}
-          className="h-12 rounded-full bg-white text-[16px] font-semibold text-black">Отложить</motion.button>
+          className="h-12 rounded-full btn-primary text-[16px] font-semibold">Отложить</motion.button>
         <motion.button whileTap={{ scale: 0.97 }} onClick={() => onMove(goal.id, 'from_goal')} disabled={saved <= 0}
-          className="glass h-12 rounded-full text-[16px] font-semibold disabled:opacity-40">Снять</motion.button>
+          className="btn-glass h-12 rounded-full text-[16px] font-semibold disabled:opacity-40">Снять</motion.button>
       </div>
     </div>
   );

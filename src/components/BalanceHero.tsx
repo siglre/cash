@@ -1,55 +1,80 @@
 import { motion } from 'framer-motion';
 import { AnimatedNumber } from './AnimatedNumber';
-import { ArrowUpRight, PlusIcon } from './Icons';
+import { ArrowDownLeft, ArrowUpRight, PlusIcon, SettingsIcon } from './Icons';
 import { formatMoney } from '../lib/money';
 
-export function BalanceHero({ monthLabel, free, income, incomeIsPlan, expense, toGoals, onAdd }: {
+/** Верхний блок-«кошелёк»: баланс месяца и три действия. */
+export function BalanceHero({ monthLabel, free, income, incomeIsPlan, expense, toGoals, empty, onAdd, onSettings }: {
   monthLabel: string; free: number; income: number; incomeIsPlan: boolean;
-  expense: number; toGoals: number;
+  expense: number; toGoals: number; empty: boolean;
   onAdd: (t: 'expense' | 'income' | 'to_goal') => void;
+  onSettings: () => void;
 }) {
+  const negative = free < 0;
   return (
-    <section className="px-5 pt-5">
-      <div className="text-center">
-        <div className="text-[15px] text-muted">Свободно в {monthLabel}</div>
+    <section
+      className="rounded-b-[36px] px-5 pb-7"
+      style={{
+        paddingTop: 'calc(env(safe-area-inset-top) + 8px)',
+        background: 'radial-gradient(140% 90% at 50% 0%, #2a2a2f 0%, #151518 55%, #0e0e10 100%)',
+        boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.06)',
+      }}
+    >
+      <div className="flex h-12 items-center justify-between">
+        <span className="text-[17px] font-semibold">Копилка</span>
+        <motion.button
+          whileTap={{ scale: 0.92 }} onClick={onSettings} aria-label="Настройки"
+          className="btn-glass grid h-11 w-11 place-items-center rounded-full"
+        >
+          <SettingsIcon size={20} />
+        </motion.button>
+      </div>
+
+      <div className="mt-7 text-center">
+        <div className="text-[15px] text-white/70">Свободно в {monthLabel}</div>
         <AnimatedNumber
           value={free}
-          className={`mt-1 block text-[52px] font-semibold leading-[1.05] tracking-tight ${free < 0 ? 'text-neg' : ''}`}
+          className="mt-2 block text-[56px] font-semibold leading-none tracking-tight"
+          style={negative ? { color: 'var(--neg)' } : {
+            background: 'linear-gradient(90deg, #ffffff 35%, #8e8e93 100%)',
+            WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+          }}
         />
-        <div className="mt-1 text-[13px] text-muted">доход − расходы − отложено на цели</div>
+        <div className="mt-3 text-[15px] text-white/80">
+          из {formatMoney(income)} дохода{incomeIsPlan ? ' (план)' : ''}
+        </div>
       </div>
 
-      <div className="card mt-5 grid grid-cols-3 divide-x divide-line py-3 text-center">
-        <Stat label={incomeIsPlan ? 'Доход (план)' : 'Доход'} value={formatMoney(income)} />
-        <Stat label="Расходы" value={formatMoney(expense)} />
-        <Stat label="Отложено" value={formatMoney(toGoals)} />
+      <div className="mt-8 flex items-center justify-center gap-4">
+        <Pill label="Доход" onClick={() => onAdd('income')}><ArrowDownLeft size={18} /></Pill>
+        <motion.button
+          whileTap={{ scale: 0.92 }} onClick={() => onAdd('expense')} aria-label="Записать расход"
+          className="btn-glass grid h-16 w-16 shrink-0 place-items-center rounded-full"
+        >
+          <PlusIcon size={28} />
+        </motion.button>
+        <Pill label="В цель" onClick={() => onAdd('to_goal')}><ArrowUpRight size={18} /></Pill>
       </div>
 
-      <motion.button
-        whileTap={{ scale: 0.98 }} onClick={() => onAdd('expense')}
-        className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-full bg-white text-[17px] font-semibold text-black shadow-[0_8px_30px_rgba(255,255,255,0.12)]"
-      >
-        <PlusIcon size={22} /> Записать расход
-      </motion.button>
-      <div className="mt-2.5 grid grid-cols-2 gap-2.5">
-        <motion.button whileTap={{ scale: 0.97 }} onClick={() => onAdd('income')}
-          className="glass flex h-12 items-center justify-center gap-1.5 rounded-full text-[15px] font-semibold">
-          <PlusIcon size={18} /> Доход
-        </motion.button>
-        <motion.button whileTap={{ scale: 0.97 }} onClick={() => onAdd('to_goal')}
-          className="glass flex h-12 items-center justify-center gap-1.5 rounded-full text-[15px] font-semibold">
-          <ArrowUpRight size={18} /> Отложить в цель
-        </motion.button>
+      <div className="mt-7 flex justify-center">
+        <div className="btn-glass flex h-8 items-center gap-2 rounded-full px-3.5 text-[13px] text-white/85">
+          <span className={`h-1.5 w-1.5 rounded-full ${negative ? 'bg-neg' : 'bg-pos'}`} />
+          {empty
+            ? 'Нажми ＋, чтобы записать трату'
+            : `Потрачено ${formatMoney(expense)} · В цели ${formatMoney(toGoals)}`}
+        </div>
       </div>
     </section>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Pill({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
   return (
-    <div className="px-1">
-      <div className="text-[12px] text-muted">{label}</div>
-      <div className="mt-0.5 text-[15px] font-semibold">{value}</div>
-    </div>
+    <motion.button
+      whileTap={{ scale: 0.95 }} onClick={onClick}
+      className="btn-glass flex h-12 w-[118px] items-center justify-center gap-2 rounded-full text-[15px] font-medium"
+    >
+      {children}{label}
+    </motion.button>
   );
 }

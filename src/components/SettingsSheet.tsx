@@ -26,7 +26,7 @@ export function SettingsSheet({ settings, onClose }: { settings: Settings; onClo
     onClose();
   };
 
-  const field = 'h-12 w-full rounded-2xl bg-white/[0.07] px-4 text-[17px] outline-none';
+  const field = 'field w-full';
 
   return (
     <div className="fixed inset-0 z-50">
@@ -62,9 +62,9 @@ export function SettingsSheet({ settings, onClose }: { settings: Settings; onClo
             <div className="flex flex-col gap-2">
               {costs.map((c, i) => (
                 <div key={i} className="flex gap-2">
-                  <input className={`${field} min-w-0 flex-1`} placeholder="Название" value={c.name}
+                  <input className="field min-w-0 flex-1" placeholder="Название" value={c.name}
                     onChange={(e) => setCosts(costs.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
-                  <input className={`${field} w-28`} inputMode="numeric" placeholder="₽" value={c.amount}
+                  <input className="field w-28 shrink-0" inputMode="numeric" placeholder="₽" value={c.amount}
                     onChange={(e) => setCosts(costs.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))} />
                   <button aria-label="Убрать" onClick={() => setCosts(costs.filter((_, j) => j !== i))}
                     className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/[0.07] text-muted"><CloseIcon size={16} /></button>

@@ -206,7 +206,7 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
             return (
               <button
                 key={o.id} onClick={() => setChosen(o.id)} aria-pressed={on}
-                className={`flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-[15px] font-medium transition-colors ${on ? 'bg-white text-black' : 'glass text-white'}`}
+                className={`flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-[15px] font-medium transition-colors ${on ? 'bg-white text-black' : 'btn-glass'}`}
               >
                 <span aria-hidden="true">{o.emoji}</span>{o.name}
               </button>
