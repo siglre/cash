@@ -35,7 +35,7 @@ export function Settings({ data, onRecurring, onCategories, notify }: {
   const stamp = new Date().toISOString().slice(0, 10);
 
   const exportJson = async () => {
-    await saveFile(`kopilka-${stamp}.json`, JSON.stringify(await exportBackup(), null, 1), 'application/json');
+    await saveFile(`cash-${stamp}.json`, JSON.stringify(await exportBackup(), null, 1), 'application/json');
   };
   const exportCsv = async () => {
     const names = {
@@ -43,7 +43,7 @@ export function Settings({ data, onRecurring, onCategories, notify }: {
       goal: new Map(data.goals.map((g) => [g.id, g.name])),
       acc: new Map([...data.accountMap.values()].map((a) => [a.id, a.name])),
     };
-    await saveFile(`kopilka-${stamp}.csv`, toCsv(data.txs, names), 'text/csv');
+    await saveFile(`cash-${stamp}.csv`, toCsv(data.txs, names), 'text/csv');
   };
   const importJson = async () => {
     const text = await pickTextFile('application/json,.json');

@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon-180x180.png', 'favicon.ico'],
       manifest: {
-        name: 'Копилка',
-        short_name: 'Копилка',
+        name: 'cash',
+        short_name: 'cash',
         description: 'Личный финансовый трекер',
         lang: 'ru',
         display: 'standalone',
@@ -26,7 +26,8 @@ export default defineConfig({
           { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-      workbox: { globPatterns: ['**/*.{js,css,html,png,svg,ico}'] },
+      // icon.png — исходник для генерации значков, в офлайн-кэш не нужен
+      workbox: { globPatterns: ['**/*.{js,css,html,png,svg,ico}'], globIgnores: ['icon.png'] },
     }),
   ],
   test: { environment: 'node' },

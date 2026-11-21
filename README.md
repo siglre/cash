@@ -1,4 +1,4 @@
-# Копилка
+# cash
 
 Личный финансовый трекер (PWA). Vite + React + TS + Tailwind v4 + Dexie.
 
@@ -6,7 +6,7 @@
 npm run dev       # dev-сервер, доступен по сети (--host) для проверки с телефона
 npm test          # Vitest, логика в src/lib
 npm run build     # прод-сборка + service worker
-npm run icons     # пересобрать PWA-иконки из public/icon.svg
+npm run icons     # пересобрать PWA-иконки из public/icon.png
 ```
 
 ## Деплой на Vercel
