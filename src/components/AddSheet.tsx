@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, useDragControls } from 'framer-motion';
-import type { AppData } from '../hooks';
-import type { Transaction, TxType } from '../lib/types';
+import { useLockScroll, type AppData } from '../hooks';
+import type { Recurring, Transaction, TxType } from '../lib/types';
 import { accountBalance, goalSaved, lastUsedAccount, lastUsedRef, sortByUsage } from '../lib/calc';
 import { dayLabel, startOfDay, toDateInput } from '../lib/dates';
 import { formatMoney } from '../lib/money';
@@ -12,6 +12,7 @@ import { BackspaceIcon } from './Icons';
 export type SheetState =
   | { kind: 'add'; type: 'expense' | 'income' | 'to_goal' | 'transfer' }
   | { kind: 'goal'; type: 'to_goal' | 'from_goal'; goalId?: string; amount?: number }
+  | { kind: 'pay'; type: 'expense'; rec: Recurring }
   | { kind: 'edit'; tx: Transaction };
 
 const SEGMENTS_ADD: { type: TxType; label: string }[] = [
@@ -38,29 +39,30 @@ const MAX_DIGITS = 9;
 
 const isGoalType = (t: TxType) => t === 'to_goal' || t === 'from_goal';
 
-export function AddSheet({ state, data, onClose, onDeleted }: {
+export function AddSheet({ state, data, onClose, onDeleted, onGoalReached }: {
   state: SheetState; data: AppData; onClose: () => void; onDeleted: (id: string) => void;
+  onGoalReached: () => void;
 }) {
   const editing = state.kind === 'edit' ? state.tx : undefined;
+  const paying = state.kind === 'pay' ? state.rec : undefined;
   const [type, setType] = useState<TxType>(editing?.type ?? (state as Exclude<SheetState, { kind: 'edit' }>).type);
   const [digits, setDigits] = useState(
-    editing ? String(editing.amount) : state.kind === 'goal' && state.amount ? String(state.amount) : '',
+    editing ? String(editing.amount)
+      : state.kind === 'goal' && state.amount ? String(state.amount)
+        : paying ? String(paying.amount) : '',
   );
   const [chosen, setChosen] = useState<string | undefined>(
-    editing ? (editing.categoryId ?? editing.goalId ?? editing.toAccountId) : state.kind === 'goal' ? state.goalId : undefined,
+    editing ? (editing.categoryId ?? editing.goalId ?? editing.toAccountId)
+      : state.kind === 'goal' ? state.goalId : paying?.categoryId,
   );
-  const [accountChoice, setAccountChoice] = useState<string | undefined>(editing?.accountId);
-  const [note, setNote] = useState(editing?.note ?? '');
+  const [accountChoice, setAccountChoice] = useState<string | undefined>(editing?.accountId ?? paying?.accountId);
+  const [note, setNote] = useState(editing?.note ?? paying?.name ?? '');
   const originalDate = editing ? toDateInput(new Date(editing.date)) : undefined;
   const [dateStr, setDateStr] = useState(() => originalDate ?? toDateInput(new Date()));
   const [saving, setSaving] = useState(false);
   const controls = useDragControls();
 
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, []);
+  useLockScroll();
 
   // Счета (плюс архивный, если редактируем старую операцию)
   const accounts = useMemo(() => {
@@ -92,7 +94,7 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
     if (type === 'transfer') {
       return accounts.filter((a) => a.id !== accountId).map((a) => ({ id: a.id, emoji: a.emoji, name: a.name }));
     }
-    const cats = data.categories.filter((c) => c.kind === type);
+    const cats = data.categories.filter((c) => c.kind === type && (!c.archived || c.id === editing?.categoryId));
     return sortByUsage(cats, data.txs.filter((t) => t.type === type))
       .map((c) => ({ id: c.id, emoji: c.emoji, name: c.name }));
   }, [type, data, editing, accounts, accountId]);
@@ -139,9 +141,12 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
       goalId: isGoalType(type) ? selected : undefined,
       accountId: needsAccount ? accountId : undefined,
       toAccountId: type === 'transfer' ? selected : undefined,
+      ...(paying ? { recurringId: paying.id } : {}),
     };
     if (editing) await updateTransaction(editing.id, payload);
     else await addTransaction(payload);
+    // Конфетти, если этим переводом цель достигнута
+    if (type === 'to_goal' && goal && saved < goal.target && saved + amount >= goal.target) onGoalReached();
     onClose();
   };
 
@@ -153,6 +158,7 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
   };
 
   const segments = state.kind === 'add' ? SEGMENTS_ADD : state.kind === 'goal' ? SEGMENTS_GOAL : null;
+  const title = paying ? `Оплата: ${paying.name}` : EDIT_TITLE[type];
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '000', '0', '⌫'];
   const [y, m, d] = dateStr.split('-').map(Number);
   const chipsLabel = isGoalType(type) ? 'Цель' : type === 'transfer' ? 'Куда' : 'Категория';
@@ -202,7 +208,7 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
               ))}
             </div>
           ) : (
-            <div className="text-center text-[15px] font-semibold">{EDIT_TITLE[type]}</div>
+            <div className="text-center text-[15px] font-semibold">{title}</div>
           )}
         </div>
 
@@ -273,7 +279,7 @@ export function AddSheet({ state, data, onClose, onDeleted }: {
             whileTap={{ scale: 0.98 }} onClick={save} disabled={!canSave}
             className="h-12 min-w-0 flex-1 rounded-full bg-black text-[15px] font-semibold text-white transition-opacity disabled:opacity-30"
           >
-            {editing ? 'Сохранить' : DONE_LABEL[type]}
+            {editing ? 'Сохранить' : paying ? 'Оплачено' : DONE_LABEL[type]}
           </motion.button>
         </div>
       </motion.div>

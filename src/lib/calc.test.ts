@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { accountBalance, freeMoney, goalSaved, goalStatus, lastUsedAccount, lastUsedRef, monthsLeft, monthSummary, neededPerMonth, neededThisMonth, sortByUsage, topCategory, totalNeededPerMonth, weeklySpend } from './calc';
+import { accountBalance, dueDate, monthlyCapacity, recurringThisPeriod, upcomingTotal, freeMoney, goalSaved, goalStatus, lastUsedAccount, lastUsedRef, monthsLeft, monthSummary, neededPerMonth, neededThisMonth, sortByUsage, topCategory, totalNeededPerMonth, weeklySpend } from './calc';
 import { monthPeriod, relativeTime } from './dates';
 import { formatMoney } from './money';
-import type { Account, Category, Goal, Settings, Transaction } from './types';
+import type { Account, Category, Goal, Recurring, Settings, Transaction } from './types';
 
 const settings: Settings = { id: 'main', currency: 'RUB', monthlyIncome: 70000, fixedCosts: [{ name: 'Квартира', amount: 31000 }], monthStartDay: 1 };
 const now = new Date(2026, 10, 21, 12, 0); // 21 ноября 2026
@@ -107,7 +107,8 @@ describe('счета', () => {
   });
   it('свободно = на счетах − долг − в целях', () => {
     const txs = [tx({ type: 'to_goal', goalId: 'g', amount: 9000 })];
-    expect(freeMoney([card, credit], [goal()], txs)).toEqual({ onAccounts: 50000, debt: 10000, inGoals: 9000, free: 31000 });
+    expect(freeMoney([card, credit], [goal()], txs)).toEqual({ onAccounts: 50000, debt: 10000, inGoals: 9000, upcoming: 0, free: 31000 });
+    expect(freeMoney([card, credit], [goal()], txs, 31000).free).toBe(0);
   });
   it('архивный счёт не считается', () => {
     expect(freeMoney([card, { ...credit, archived: true }], [], []).free).toBe(50000);
@@ -132,6 +133,28 @@ describe('neededThisMonth', () => {
   });
   it('не больше, чем осталось до цели', () => {
     expect(neededThisMonth([goal({ target: 1000 })], [], now).total).toBe(143);
+  });
+});
+
+describe('регулярные платежи', () => {
+  const rent: Recurring = { id: 'rent', name: 'Квартира', amount: 31000, day: 5, order: 0 };
+  const subs: Recurring = { id: 'subs', name: 'Подписки', amount: 1000, day: 31, order: 1 };
+  it('dueDate: обычный месяц и короткий', () => {
+    expect(dueDate(5, monthPeriod(now))).toEqual(new Date(2026, 10, 5));
+    expect(dueDate(31, monthPeriod(now))).toEqual(new Date(2026, 10, 30)); // в ноябре 30 дней
+  });
+  it('dueDate при начале месяца 25-го: день 5 — в следующем календарном месяце', () => {
+    expect(dueDate(5, monthPeriod(now, 25))).toEqual(new Date(2026, 10, 5));
+    expect(dueDate(28, monthPeriod(now, 25))).toEqual(new Date(2026, 9, 28));
+  });
+  it('оплачен, если есть операция с recurringId в периоде', () => {
+    const txs = [tx({ recurringId: 'rent', amount: 31000 }), tx({ recurringId: 'subs', date: new Date(2026, 9, 30).toISOString() })];
+    const st = recurringThisPeriod([rent, subs], txs, now);
+    expect(st.map((s) => [s.rec.id, s.paid])).toEqual([['subs', false], ['rent', true]]);
+    expect(upcomingTotal(st)).toBe(1000);
+  });
+  it('capacity = доход − платежи', () => {
+    expect(monthlyCapacity(settings, [rent, subs, { ...subs, id: 'x', archived: true }])).toBe(70000 - 32000);
   });
 });
 

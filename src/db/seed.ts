@@ -1,4 +1,8 @@
-import type { Account, Category, Goal, Settings } from '../lib/types';
+import type { Account, Category, Goal, Recurring, Settings } from '../lib/types';
+
+export const seedRecurring: Recurring[] = [
+  { id: 'rec-rent', name: 'Квартира', amount: 31000, day: 1, categoryId: 'exp-rent', accountId: 'acc-card', order: 0 },
+];
 
 export const seedAccounts: Account[] = [
   { id: 'acc-card', name: 'Карта', kind: 'debit', emoji: '💳', color: '#5B8CFF', initialBalance: 0, order: 0 },
@@ -36,6 +40,6 @@ export const seedSettings: Settings = {
   id: 'main',
   currency: 'RUB',
   monthlyIncome: 70000,
-  fixedCosts: [{ name: 'Квартира', amount: 31000 }],
+  fixedCosts: [],
   monthStartDay: 1,
 };

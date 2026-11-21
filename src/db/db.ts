@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Account, Category, Goal, Settings, Transaction } from '../lib/types';
-import { seedAccounts, seedCategories, seedGoals, seedSettings } from './seed';
+import type { Account, Category, Goal, Recurring, Settings, Transaction } from '../lib/types';
+import { seedAccounts, seedCategories, seedGoals, seedRecurring, seedSettings } from './seed';
 
 class AppDB extends Dexie {
   transactions!: EntityTable<Transaction, 'id'>;
@@ -8,6 +8,7 @@ class AppDB extends Dexie {
   goals!: EntityTable<Goal, 'id'>;
   settings!: EntityTable<Settings, 'id'>;
   accounts!: EntityTable<Account, 'id'>;
+  recurring!: EntityTable<Recurring, 'id'>;
 
   constructor() {
     super('kopilka');
@@ -29,12 +30,30 @@ class AppDB extends Dexie {
           if ((t.type === 'expense' || t.type === 'income') && !t.accountId) t.accountId = 'acc-card';
         });
       });
+    // v3: регулярные платежи вместо «обязательных расходов» из настроек.
+    this.version(3)
+      .stores({ recurring: 'id, order' })
+      .upgrade(async (tx) => {
+        const s = (await tx.table('settings').get('main')) as Settings | undefined;
+        const list: Recurring[] = (s?.fixedCosts ?? []).map((f, i) => ({
+          id: crypto.randomUUID(),
+          name: f.name,
+          amount: f.amount,
+          day: 1,
+          categoryId: /квартир|аренд/i.test(f.name) ? 'exp-rent' : 'exp-other',
+          accountId: 'acc-card',
+          order: i,
+        }));
+        if (list.length) await tx.table('recurring').bulkAdd(list);
+        await tx.table('settings').update('main', { fixedCosts: [] });
+      });
     // Seed при первом создании базы
     this.on('populate', (tx) => {
       tx.table('categories').bulkAdd(seedCategories);
       tx.table('goals').bulkAdd(seedGoals);
       tx.table('settings').add(seedSettings);
       tx.table('accounts').bulkAdd(seedAccounts);
+      tx.table('recurring').bulkAdd(seedRecurring);
     });
   }
 }

@@ -1,4 +1,4 @@
-import type { Account, Category, Goal, Settings, Transaction } from './types';
+import type { Account, Category, Goal, Recurring, Settings, Transaction } from './types';
 import { addDays, inPeriod, monthPeriod, startOfDay, type Period } from './dates';
 
 const live = (txs: Transaction[]) => txs.filter((t) => !t.deleted);
@@ -84,8 +84,9 @@ export function goalStatus(
   return { kind: 'need', perMonth: needed };
 }
 
-export const monthlyCapacity = (s: Settings) =>
-  s.monthlyIncome - s.fixedCosts.reduce((a, f) => a + f.amount, 0);
+/** Сколько можно откладывать в месяц: плановый доход − регулярные платежи. */
+export const monthlyCapacity = (s: Settings, recurring: Recurring[] = []) =>
+  s.monthlyIncome - recurring.filter((r) => !r.archived).reduce((a, r) => a + r.amount, 0);
 
 /** Ближайшая по сроку незавершённая цель. */
 export function nearestGoal(goals: Goal[], txs: Transaction[]): Goal | undefined {
@@ -152,11 +153,12 @@ export interface FreeSummary {
   onAccounts: number; // сумма положительных остатков
   debt: number;       // сумма долгов (положительное число)
   inGoals: number;    // отложено в активные цели
+  upcoming: number;   // неоплаченные регулярные платежи этого месяца
   free: number;
 }
 
-/** Свободно = на счетах − долги − отложено в цели. */
-export function freeMoney(accounts: Account[], goals: Goal[], txs: Transaction[]): FreeSummary {
+/** Свободно = на счетах − долги − отложено в цели − ещё не оплаченные платежи месяца. */
+export function freeMoney(accounts: Account[], goals: Goal[], txs: Transaction[], upcoming = 0): FreeSummary {
   let onAccounts = 0, debt = 0;
   for (const a of accounts) {
     if (a.archived) continue;
@@ -164,8 +166,34 @@ export function freeMoney(accounts: Account[], goals: Goal[], txs: Transaction[]
     if (b >= 0) onAccounts += b; else debt -= b;
   }
   const inGoals = goals.filter((g) => !g.archived).reduce((s, g) => s + Math.max(0, goalSaved(txs, g.id)), 0);
-  return { onAccounts, debt, inGoals, free: onAccounts - debt - inGoals };
+  return { onAccounts, debt, inGoals, upcoming, free: onAccounts - debt - inGoals - upcoming };
 }
+
+/* ───────────── Регулярные платежи ───────────── */
+
+/** Дата платежа внутри периода [start, end). День больше длины месяца → последний день. */
+export function dueDate(day: number, p: Period): Date {
+  const pick = (y: number, m: number) => new Date(y, m, Math.min(day, new Date(y, m + 1, 0).getDate()));
+  const first = pick(p.start.getFullYear(), p.start.getMonth());
+  return first.getTime() >= p.start.getTime() ? first : pick(p.start.getFullYear(), p.start.getMonth() + 1);
+}
+
+export interface RecurringState { rec: Recurring; due: Date; paid: boolean }
+
+/** Платежи текущего периода: когда и оплачен ли (есть расход с этим recurringId в периоде). */
+export function recurringThisPeriod(recs: Recurring[], txs: Transaction[], now: Date, startDay = 1): RecurringState[] {
+  const p = monthPeriod(now, startDay);
+  const paidIds = new Set(
+    live(txs).filter((t) => t.recurringId && inPeriod(t.date, p)).map((t) => t.recurringId),
+  );
+  return recs
+    .filter((r) => !r.archived)
+    .map((rec) => ({ rec, due: dueDate(rec.day, p), paid: paidIds.has(rec.id) }))
+    .sort((a, b) => Number(a.paid) - Number(b.paid) || a.due.getTime() - b.due.getTime());
+}
+
+export const upcomingTotal = (states: RecurringState[]) =>
+  states.filter((s) => !s.paid).reduce((a, s) => a + s.rec.amount, 0);
 
 /**
  * Сколько нужно отложить в текущем месяце.

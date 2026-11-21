@@ -10,6 +10,12 @@ export function BalanceHero({ sum, onAdd }: {
   onAdd: (t: 'expense' | 'income' | 'to_goal') => void;
 }) {
   const negative = sum.free < 0;
+  const parts: [string, string][] = [
+    ['На счетах', formatMoney(sum.onAccounts)],
+    ...(sum.debt ? [['Долг', `−${formatMoney(sum.debt)}`] as [string, string]] : []),
+    ...(sum.upcoming ? [['Платежи', `−${formatMoney(sum.upcoming)}`] as [string, string]] : []),
+    ...(sum.inGoals ? [['В целях', `−${formatMoney(sum.inGoals)}`] as [string, string]] : []),
+  ];
   return (
     <section className="hero mx-2 rounded-[34px] px-5 pb-6 pt-8 text-center">
       <div className="text-[13px] text-white/60">Свободно</div>
@@ -22,10 +28,11 @@ export function BalanceHero({ sum, onAdd }: {
         }}
       />
 
-      <div className="mx-auto mt-4 grid max-w-[320px] grid-cols-3 text-[11px] text-white/45">
-        <div>На счетах<div className="mt-0.5 text-[13px] text-white/85">{formatMoney(sum.onAccounts)}</div></div>
-        <div>Долг<div className="mt-0.5 text-[13px] text-white/85">{sum.debt ? `−${formatMoney(sum.debt)}` : formatMoney(0)}</div></div>
-        <div>В целях<div className="mt-0.5 text-[13px] text-white/85">{sum.inGoals ? `−${formatMoney(sum.inGoals)}` : formatMoney(0)}</div></div>
+      {/* Из чего складывается «Свободно» — только ненулевые слагаемые */}
+      <div className="mx-auto mt-4 flex max-w-[360px] justify-center gap-5 text-[11px] text-white/45">
+        {parts.map(([label, value]) => (
+          <div key={label}>{label}<div className="mt-0.5 text-[13px] text-white/85">{value}</div></div>
+        ))}
       </div>
 
       <div className="mt-6 flex items-center justify-center gap-3">
