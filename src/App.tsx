@@ -51,6 +51,8 @@ export default function App() {
       className="mx-auto min-h-dvh max-w-[520px]"
       style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 100px)' }}
     >
+      {/* Пока открыта шторка, всё под ней недоступно для тапов и VoiceOver */}
+      <div inert={!!(sheet || form) || undefined}>
       {tab === 'home' && (
         <Home
           data={data} now={now}
@@ -78,6 +80,7 @@ export default function App() {
       )}
 
       <TabBar tab={tab} onChange={go} />
+      </div>
 
       <AnimatePresence>
         {toast && (

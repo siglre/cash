@@ -115,13 +115,13 @@ function GoalCard({ goal, data, now, capacity, onMove, onEdit }: {
       )}
       <InfoRow label="Статус"><Pill color={st.color}>{st.text}</Pill></InfoRow>
 
-      <div className="mt-3 grid grid-cols-[1fr_1fr_auto] gap-2">
+      <div className="mt-3 grid grid-cols-3 gap-2">
         <motion.button whileTap={{ scale: 0.97 }} onClick={() => onMove(goal.id, 'to_goal')}
-          className="h-10 rounded-full bg-white text-[14px] font-semibold text-black">Отложить</motion.button>
+          className="h-11 min-w-0 rounded-full bg-white px-1 text-[14px] font-semibold text-black">Отложить</motion.button>
         <motion.button whileTap={{ scale: 0.97 }} onClick={() => onMove(goal.id, 'from_goal')} disabled={saved <= 0}
-          className="h-10 rounded-full bg-white/10 text-[14px] disabled:opacity-40">Снять</motion.button>
+          className="h-11 min-w-0 rounded-full bg-white/10 px-1 text-[14px] disabled:opacity-40">Снять</motion.button>
         <motion.button whileTap={{ scale: 0.97 }} onClick={onEdit}
-          className="h-10 rounded-full bg-white/10 px-4 text-[14px]">Изменить</motion.button>
+          className="h-11 min-w-0 rounded-full bg-white/10 px-1 text-[14px]">Изменить</motion.button>
       </div>
     </div>
   );

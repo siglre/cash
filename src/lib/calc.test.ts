@@ -153,6 +153,14 @@ describe('регулярные платежи', () => {
     expect(st.map((s) => [s.rec.id, s.paid])).toEqual([['subs', false], ['rent', true]]);
     expect(upcomingTotal(st)).toBe(1000);
   });
+  it('оплачен, если расход записан вручную: та же категория и сумма', () => {
+    const r = { ...rent, categoryId: 'exp-rent' };
+    expect(recurringThisPeriod([r], [tx({ categoryId: 'exp-rent', amount: 31000 })], now)[0].paid).toBe(true);
+    expect(recurringThisPeriod([r], [tx({ categoryId: 'exp-rent', amount: 30000 })], now)[0].paid).toBe(false);
+    // один расход не закрывает два одинаковых платежа
+    const st = recurringThisPeriod([r, { ...r, id: 'rent2' }], [tx({ categoryId: 'exp-rent', amount: 31000 })], now);
+    expect(st.filter((s) => s.paid)).toHaveLength(1);
+  });
   it('capacity = доход − платежи', () => {
     expect(monthlyCapacity(settings, [rent, subs, { ...subs, id: 'x', archived: true }])).toBe(70000 - 32000);
   });

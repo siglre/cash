@@ -59,6 +59,10 @@ export function Settings({ data, onRecurring, onCategories, notify }: {
     );
     if (!ok) return;
     await importBackup(b);
+    // поля на экране — локальное состояние: подтянуть значения из бэкапа
+    first.current = true;
+    setIncome(String(b.settings.monthlyIncome ?? 0));
+    setStartDay(b.settings.monthStartDay ?? 1);
     notify('Данные восстановлены');
   };
 

@@ -73,7 +73,7 @@ export function GoalSheet({ goal, saved, onClose }: { goal?: Goal; saved: number
           const on = g[0] === gradient[0];
           return (
             <button key={g.join()} onClick={() => setGradient(g)} aria-label="Цвет" aria-pressed={on}
-              className={`h-10 rounded-full ${on ? 'ring-2 ring-black ring-offset-2' : ''}`}
+              className={`mx-auto aspect-square w-full max-w-10 rounded-full ${on ? 'ring-2 ring-black ring-offset-2' : ''}`}
               style={{ background: g[0] }} />
           );
         })}

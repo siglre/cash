@@ -80,7 +80,7 @@ function CategoryCard({ data, period, expenseCats }: {
               <div key={i.key} style={{ flexGrow: i.amount, background: i.color, minWidth: 3 }} title={`${i.name}: ${formatMoney(i.amount)}`} />
             ))}
           </div>
-          <ul className="mt-3.5 grid grid-cols-2 gap-x-3 gap-y-2">
+          <ul className="mt-3.5 grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-x-4 gap-y-2">
             {items.map((i) => (
               <li key={i.key} className="flex min-w-0 items-center gap-2 text-[13px]">
                 <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: i.color }} />
@@ -175,7 +175,7 @@ function PaceCard({ data, now, period, prev }: {
         {idx <= todayIdx && <circle cx={x(idx)} cy={y(curVal)} r={4.5} fill={CUR} stroke={SURFACE} strokeWidth={2} />}
 
         <text x={PAD_L} y={H - 4} fill="var(--ink-muted)" fontSize={10}>1</text>
-        <text x={W - PAD_R} y={H - 4} fill="var(--ink-muted)" fontSize={10} textAnchor="end">{days}</text>
+        <text x={x(cur.length - 1)} y={H - 4} fill="var(--ink-muted)" fontSize={10} textAnchor="end">{cur.length}</text>
       </svg>
       <div className="mt-1 text-[11px] text-[var(--ink-muted)]">Проведи пальцем по графику, чтобы сравнить другой день</div>
     </section>

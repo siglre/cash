@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useDragControls } from 'framer-motion';
 import { useLockScroll, type AppData } from '../hooks';
 import type { Recurring, Transaction, TxType } from '../lib/types';
@@ -103,6 +103,18 @@ export function AddSheet({ state, data, onClose, onDeleted, onGoalReached }: {
   const selected = options.find((o) => o.id === chosen)?.id
     ?? options.find((o) => o.id === lastRef)?.id
     ?? options[0]?.id;
+
+  // Выбранный чип всегда в зоне видимости (последняя категория может быть в конце списка)
+  const chipsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const box = chipsRef.current;
+    const el = box?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!box || !el) return;
+    const left = el.offsetLeft; // box — relative, offsetLeft считается от него
+    if (left < box.scrollLeft || left + el.offsetWidth > box.scrollLeft + box.clientWidth) {
+      box.scrollLeft = Math.max(0, left - 20);
+    }
+  }, [selected, type]);
 
   const amount = digits ? Number(digits) : 0;
 
@@ -246,9 +258,11 @@ export function AddSheet({ state, data, onClose, onDeleted, onGoalReached }: {
         </div>
 
         <div className="mt-3 px-5 text-[11px] uppercase tracking-wide text-muted">{chipsLabel}</div>
-        <div className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto px-5 py-1.5">
+        <div ref={chipsRef} className="no-scrollbar relative flex shrink-0 gap-2 overflow-x-auto px-5 py-1.5">
           {options.length === 0 && (
-            <div className="py-3 text-[14px] text-muted">{type === 'transfer' ? 'Нужен второй счёт' : 'Нет активных целей'}</div>
+            <div className="py-3 text-[14px] text-muted">
+              {type === 'transfer' ? 'Нужен второй счёт' : isGoalType(type) ? 'Нет активных целей' : 'Нет категорий — добавь их в настройках'}
+            </div>
           )}
           {options.map((o) => {
             const on = o.id === selected;

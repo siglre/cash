@@ -26,7 +26,7 @@ export function BalanceHero({ sum, onAdd }: {
       />
 
       {/* Из чего складывается «Свободно» — только ненулевые слагаемые */}
-      <div className="mx-auto mt-5 flex max-w-[360px] justify-center gap-5 text-[11px] text-white/45">
+      <div className="mx-auto mt-5 flex max-w-[360px] flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] text-white/45">
         {parts.map(([label, value]) => (
           <div key={label}>{label}<div className="mt-0.5 text-[13px] text-white/85">{value}</div></div>
         ))}

@@ -180,15 +180,27 @@ export function dueDate(day: number, p: Period): Date {
 
 export interface RecurringState { rec: Recurring; due: Date; paid: boolean }
 
-/** Платежи текущего периода: когда и оплачен ли (есть расход с этим recurringId в периоде). */
+/**
+ * Платежи текущего периода: когда и оплачен ли.
+ * Оплачен — если в периоде есть расход с этим recurringId, либо (записали вручную)
+ * расход той же категории на ту же сумму, ещё не «занятый» другим платежом.
+ */
 export function recurringThisPeriod(recs: Recurring[], txs: Transaction[], now: Date, startDay = 1): RecurringState[] {
   const p = monthPeriod(now, startDay);
-  const paidIds = new Set(
-    live(txs).filter((t) => t.recurringId && inPeriod(t.date, p)).map((t) => t.recurringId),
-  );
-  return recs
-    .filter((r) => !r.archived)
-    .map((rec) => ({ rec, due: dueDate(rec.day, p), paid: paidIds.has(rec.id) }))
+  const month = live(txs).filter((t) => t.type === 'expense' && inPeriod(t.date, p));
+  const active = recs.filter((r) => !r.archived);
+  const paid = new Set<string>();
+  const used = new Set<string>();
+  for (const t of month) {
+    if (t.recurringId && active.some((r) => r.id === t.recurringId)) { paid.add(t.recurringId); used.add(t.id); }
+  }
+  for (const r of active) {
+    if (paid.has(r.id) || !r.categoryId) continue;
+    const match = month.find((t) => !used.has(t.id) && !t.recurringId && t.categoryId === r.categoryId && t.amount === r.amount);
+    if (match) { paid.add(r.id); used.add(match.id); }
+  }
+  return active
+    .map((rec) => ({ rec, due: dueDate(rec.day, p), paid: paid.has(rec.id) }))
     .sort((a, b) => Number(a.paid) - Number(b.paid) || a.due.getTime() - b.due.getTime());
 }
 
