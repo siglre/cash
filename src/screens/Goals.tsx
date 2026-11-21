@@ -101,7 +101,7 @@ function GoalCard({ goal, data, now, capacity, onMove, onEdit }: {
             <span aria-hidden="true">{goal.emoji}</span>
             <span className="truncate">{goal.name}</span>
           </div>
-          <div className="mt-1.5 text-[28px] font-semibold leading-none tracking-tight">{formatMoney(saved)}</div>
+          <div className="metal mt-1.5 inline-block text-[28px] font-semibold leading-none tracking-tight">{formatMoney(saved)}</div>
           <div className="mt-1 text-[12px] text-[var(--ink-muted)]">из {formatMoney(goal.target)} · {pct}%</div>
         </div>
         <Ring value={saved / goal.target} color={accent} />

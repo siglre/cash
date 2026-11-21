@@ -21,11 +21,8 @@ export function BalanceHero({ sum, onAdd }: {
       <div className="text-[14px] text-white/60">Свободно</div>
       <AnimatedNumber
         value={sum.free}
-        className="mt-2 block text-[52px] font-semibold leading-none tracking-tight"
-        style={negative ? { color: '#ff6b61' } : {
-          background: 'linear-gradient(90deg, #ffffff 30%, #9a9aa0 100%)',
-          WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-        }}
+        className={`mt-2 block text-[52px] font-semibold leading-none tracking-tight ${negative ? '' : 'metal'}`}
+        style={negative ? { color: '#ff6b61' } : undefined}
       />
 
       {/* Из чего складывается «Свободно» — только ненулевые слагаемые */}

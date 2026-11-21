@@ -69,7 +69,7 @@ function CategoryCard({ data, period, expenseCats }: {
   return (
     <section className="dark-card p-4">
       <div className="text-[14px] text-[var(--ink-2)]">Расходы в {monthPrepositional(period.start.getMonth())}</div>
-      <div className="mt-1 text-[28px] font-semibold leading-none tracking-tight">{formatMoney(total)}</div>
+      <div className="metal mt-1 inline-block text-[28px] font-semibold leading-none tracking-tight">{formatMoney(total)}</div>
 
       {total > 0 ? (
         <>

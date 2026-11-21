@@ -201,7 +201,7 @@ export function AddSheet({ state, data, onClose, onDeleted, onGoalReached }: {
                 <button
                   key={s.type}
                   onClick={() => { setType(s.type); setChosen(state.kind === 'goal' ? state.goalId : undefined); }}
-                  className={`h-8 rounded-full text-[14px] font-medium transition-colors ${s.type === type ? 'bg-white text-black shadow-[0_1px_4px_rgba(0,0,0,0.12)]' : 'text-black/55'}`}
+                  className={`h-8 rounded-full text-[14px] font-medium transition-colors ${s.type === type ? 'bg-white text-black' : 'text-black/55'}`}
                 >
                   {s.label}
                 </button>

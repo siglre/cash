@@ -45,7 +45,7 @@ export function AccountSheet({ account, balance, canDelete, onClose }: {
             {(['debit', 'credit'] as const).map((k) => (
               <button
                 key={k} onClick={() => setKind(k)}
-                className={`h-7 rounded-full px-2.5 text-[13px] ${kind === k ? 'bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12)]' : 'text-black/55'}`}
+                className={`h-7 rounded-full px-2.5 text-[13px] ${kind === k ? 'bg-white' : 'text-black/55'}`}
               >
                 {k === 'debit' ? 'Дебетовая' : 'Кредитная'}
               </button>

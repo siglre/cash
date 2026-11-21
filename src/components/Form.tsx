@@ -66,7 +66,7 @@ export function LinkRow({ label, value, onClick, tone }: {
 
 /** Стили полей внутри строк. Шрифт 16px — иначе iOS зумит при фокусе. */
 export const inputRight = 'min-w-0 flex-1 bg-transparent text-right text-[16px] text-muted outline-none focus:text-fg placeholder:text-black/25';
-export const selectRight = 'max-w-[60%] appearance-none truncate bg-transparent text-right text-[16px] text-muted outline-none';
+export const selectRight = 'min-w-0 shrink-0 appearance-none bg-transparent text-right text-[16px] text-muted outline-none [text-align-last:right]';
 
 export const onlyDigits = (s: string) => s.replace(/\D/g, '');
 export const groupDigits = (s: string) => onlyDigits(s).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
